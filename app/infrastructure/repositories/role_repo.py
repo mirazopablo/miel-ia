@@ -12,17 +12,14 @@ class RoleRepo(BaseRepository[Role]):
     def get_by_id(self, id: Union[str, uuid.UUID]) -> Optional[Role]:
         """Obtiene el rol completo por su ID (acepta string o UUID)"""
         if isinstance(id, uuid.UUID):
-            id = str(id)
-        
-        print(f"🔍 RoleRepo buscando ID: {repr(id)} (tipo: {type(id)})")
-        
+            id = str(id)        
         return self.db.query(self.model).filter(self.model.id == id).first()
 
     def get_role_name(self, id: Union[str, uuid.UUID]) -> Optional[str]:
         """Obtiene solo el nombre del rol (acepta string o UUID)"""
         if isinstance(id, uuid.UUID):
             id = str(id)
-            
+
         role = self.get_by_id(id)
         return role.name if role else None
 

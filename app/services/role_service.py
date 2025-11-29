@@ -17,7 +17,7 @@ class RoleService:
         if not role:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Role with ID {role_id} not found"
+                detail=f"Role with ID {role_id} not found (RoleService)"
             )
         return role
 
@@ -27,19 +27,22 @@ class RoleService:
         if not name:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Role with ID {role_id} not found"
+                detail=f"Role with ID {role_id} not found (RoleService)"
             )
         return name
 
     def get_all_roles(self) -> List[RoleResponseDTO]:
+        """Obtiene todos los roles"""
         roles = self._role_repo.get_all()
         return [RoleResponseDTO.model_validate(role) for role in roles]
     
     def create_role(self, name: str) -> RoleDTO:
+        """Crea un nuevo rol"""
         if not name:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Role name is required"
+                detail="Role name is required (RoleService)"
             )
         role = self._role_repo.create(name=name)
+        log.success(f"Role created successfully (RoleService)")
         return RoleDTO.model_validate(role)

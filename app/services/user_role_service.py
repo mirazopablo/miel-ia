@@ -33,7 +33,7 @@ class UserRoleService:
         normalized_id = self._normalize_id(id)
         user_role = self.__user_role_repo.get(db, normalized_id)
         if not user_role:
-            raise HTTPException(status_code=404, detail="UserRole not found")
+            raise HTTPException(status_code=404, detail="UserRole not found (UserRoleService)")
         return UserRoleResponseDTO.model_validate(user_role)
     
     def get_users_by_role_id(self, db: Session, role_id: Union[str, uuid.UUID]) -> List:
@@ -72,18 +72,16 @@ class UserRoleService:
 
         
         user = self.__user_repo.get(db, id=user_id)
-        print(f"   User encontrado: {user is not None}")
         if not user:
-            raise HTTPException(status_code=404, detail="User not found (user_role_service)")
+            raise HTTPException(status_code=404, detail="User not found (UserRoleService)")
         
         role = self.__role_repo.get_by_id(role_id)
-        print(f"   Role encontrado: {role is not None}")
         if not role:
-            raise HTTPException(status_code=404, detail="Role not found (user_role_service)")
+            raise HTTPException(status_code=404, detail="Role not found (UserRoleService)")
 
         existing = self.__user_role_repo.get_by_user_and_role(db, user_id, role_id)
         if existing:
-            raise HTTPException(status_code=400, detail="User already has this role assigned (user_role_service)")
+            raise HTTPException(status_code=400, detail="User already has this role assigned (UserRoleService)")
         
         normalized_obj_in = UserRoleCreateDTO(
             user_id=user_id,
@@ -97,17 +95,17 @@ class UserRoleService:
         normalized_id = self._normalize_id(id)
         db_user_role = self.__user_role_repo.get(db, normalized_id)
         if not db_user_role:
-            raise HTTPException(status_code=404, detail="UserRole not found")
+            raise HTTPException(status_code=404, detail="UserRole not found (UserRoleService)")
 
         if obj_in.user_id:
             normalized_user_id = self._normalize_id(obj_in.user_id)
             if not self.__user_repo.get(db, normalized_user_id):
-                raise HTTPException(status_code=404, detail="User not found")
+                raise HTTPException(status_code=404, detail="User not found (UserRoleService)")
         
         if obj_in.role_id:
             normalized_role_id = self._normalize_id(obj_in.role_id)
             if not self.__role_repo.get_by_id(normalized_role_id):
-                raise HTTPException(status_code=404, detail="Role not found")
+                raise HTTPException(status_code=404, detail="Role not found (UserRoleService)")
             
         updated = self.__user_role_repo.update(db, db_obj=db_user_role, obj_in=obj_in)
         return UserRoleResponseDTO.model_validate(updated)
@@ -116,6 +114,6 @@ class UserRoleService:
         normalized_id = self._normalize_id(id)
         db_user_role = self.__user_role_repo.get(db, normalized_id)
         if not db_user_role:
-            raise HTTPException(status_code=404, detail="UserRole not found")
+            raise HTTPException(status_code=404, detail="UserRole not found (UserRoleService)")
         deleted = self.__user_role_repo.delete(db, id=normalized_id)
         return UserRoleResponseDTO.model_validate(deleted)

@@ -2,8 +2,6 @@ from typing import Any, List
 import uuid
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-
-# Importamos todos los DTOs que el servicio va a necesitar o devolver
 from ..infrastructure.db.DTOs.user_dto import UserCreateInternal, UserUpdateDTO, UserBaseDTO
 from ..infrastructure.repositories.user_repo import UserRepo
 from ..core.security import get_password_hash
@@ -25,7 +23,7 @@ class UserService:
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with id {user_id} not found"
+                detail=f"User with id {user_id} not found (UserService)"
             )
         return user
 
@@ -40,7 +38,7 @@ class UserService:
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with DNI {dni} not found"
+                detail=f"User with DNI {dni} not found (UserService)"
             )
         return user
     
@@ -50,21 +48,22 @@ class UserService:
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with email {email} not found"
+                detail=f"User with email {email} not found (UserService)"
             )
         return user
-    #Post Method
+
+
     def create_user(self, db: Session, user_create: UserCreateInternal) -> UserBaseDTO:
         """Crea un nuevo usuario."""
         if self.__user_repo.email_exists(db, email=user_create.email):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Email already registered"
+                detail="Email already registered (UserService)"
             )        
         if self.__user_repo.dni_exists(db, dni=user_create.dni):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="DNI already registered"
+                detail="DNI already registered (UserService)"
             )
         
         hashed_password = get_password_hash(user_create.password)
@@ -73,7 +72,6 @@ class UserService:
 
         return self.__user_repo.create(db, obj_in=user_data)
 
-    #Put Method
     def update(self, db: Session, user_id: uuid.UUID, user_update: UserUpdateDTO) -> UserBaseDTO:
         """Actualiza un usuario."""
         db_user = self.find_by_id(db, user_id) 
@@ -81,22 +79,20 @@ class UserService:
             if self.__user_repo.email_exists(db, email=user_update.email):
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail="Email already registered by another user"
+                    detail="Email already registered by another user (UserService)"
                 )
         
         if user_update.dni and user_update.dni != db_user.dni:
             if self.__user_repo.dni_exists(db, dni=user_update.dni):
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail="DNI already registered by another user"
+                    detail="DNI already registered by another user (UserService)"
                 )
 
         return self.__user_repo.update(db, db_obj=db_user, obj_in=user_update)
     
-    #Delete Method
     def delete(self, db: Session, user_id: uuid.UUID) -> UserBaseDTO:
         """Elimina un usuario y todas sus relaciones asociadas (vía repositorio)."""
-        # Verificar existencia
         user = self.find_by_id(db, user_id)
         try:
             deleted_user = self.__user_repo.delete_with_relations(db, id=user_id)
@@ -104,10 +100,10 @@ class UserService:
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with id {user_id} not found"
+                detail=f"User with id {user_id} not found (UserService)"
             )
         except RuntimeError as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=str(e)
+                detail=f"Error deleting user with id {user_id}: {str(e)} (UserService)"
             )

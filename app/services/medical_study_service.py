@@ -23,12 +23,12 @@ class MedicalStudyService:
         if self.__medical_study_repo.get_by_access_code(db, access_code=study_data.access_code):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Access code already exists."
+                detail="Medical Study Service: Access code already exists."
             )
 
         doctor = self.__user_repo.get(db, id=study_data.doctor_id)
         if not doctor:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Doctor not found.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Medical Study Service: Doctor not found.")
         
         admin_role_id, doctor_role_id, patient_role_id = self.__get_role_ids_from_db(db)
         
@@ -44,12 +44,12 @@ class MedicalStudyService:
         if not has_doctor_role:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, 
-                detail=f"User is not a doctor. User has roles: {doctor_role_names}"
+                detail=f"Medical Study Service: User is not a doctor. User has roles: {doctor_role_names}"
             )
         
         patient = self.__user_repo.get(db, id=study_data.patient_id)
         if not patient:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Patient not found.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Medical Study Service: Patient not found.")
         
         patient_role_ids = [str(role.id) for role in patient.roles]
         patient_role_names = [role.name for role in patient.roles]
@@ -62,23 +62,23 @@ class MedicalStudyService:
         if not has_patient_role:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, 
-                detail=f"User is not a patient. User has roles: {patient_role_names}"
+                detail=f"Medical Study Service: User is not a patient. User has roles: {patient_role_names}"
             )
 
         if study_data.technician_id:
             technician = self.__user_repo.get(db, id=study_data.technician_id)
             if not technician:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Technician not found.")
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Medical Study Service: Technician not found.")
 
-        # 5. Crear el estudio
         try:
             study_dict = study_data.model_dump()
             study = self.__medical_study_repo.create(db, obj_in=study_dict)
+            log.success(f"Medical Study created successfully (MedicalStudyService)")
             return MedicalStudyResponseDTO.model_validate(study)
         except Exception as e:
-            raise HTTPException as http_except(
+            raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Error creating medical study, backend error: " + str(http_except)
+                detail="Medical Study Service: Error creating medical study, backend error: " + str(e)
             )
 
     def __get_role_ids_from_db(self, db: Session):
@@ -97,6 +97,7 @@ class MedicalStudyService:
                 role_map.get('Admin'),
                 role_map.get('Doctor'), 
                 role_map.get('Patient')
+                role_map.get('Technician')
             )
         except Exception as e:
             raise HTTPException(
@@ -144,7 +145,7 @@ class MedicalStudyService:
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Error converting medical study to DTO: " + str(e)
+                detail="Error converting medical study to DTO (MedicalStudyService): " + str(e)
             )
     
     def get_by_patient_dni(self, db: Session, *, dni: str, access_code: str) -> List[MedicalStudy]:
@@ -152,7 +153,7 @@ class MedicalStudyService:
         Obtiene estudios por DNI del paciente con validación de código de acceso.
         """
         if not dni or not access_code:
-            raise ValueError("DNI y código de acceso son requeridos")
+            raise ValueError("DNI y código de acceso son requeridos (MedicalStudyService)")
         
         dni = dni.strip().replace("-", "").replace(".", "")
         
@@ -161,7 +162,7 @@ class MedicalStudyService:
         if not studies:
             raise HTTPException(
                 status_code=404, 
-                detail="No se encontraron estudios o credenciales inválidas"
+                detail="No se encontraron estudios o credenciales inválidas (MedicalStudyService)"
             )
         
         return studies
@@ -199,7 +200,7 @@ class MedicalStudyService:
         Verifica que un estudio exista y luego lo elimina.
         """
         study_to_delete = self.get_by_id(db, study_id=study_id)
-        
+        log.success(f"Study deleted successfully (MedicalStudyService)")
         return self.__medical_study_repo.delete(db, id=study_to_delete.id)
 
     def update(self, db: Session, *, study_id: UUID, study_update: MedicalStudyUpdateDTO):
@@ -210,17 +211,20 @@ class MedicalStudyService:
         if not db_study:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Medical study with ID {study_id} not found."
+                detail=f"Medical study with ID {study_id} not found.(MedicalStudyService)"
             )
         
         update_data = study_update.model_dump(exclude_unset=True)
+        log.success(f"Study updated successfully (MedicalStudyService)")
 
         if "doctor_id" in update_data:
             new_doctor_id = update_data["doctor_id"]
+            log.success(f"Doctor ID updated successfully (MedicalStudyService)")
             doctor = self.__user_repo.get(db, id=new_doctor_id)
             if not doctor or "DOCTOR" not in [role.name for role in doctor.roles]:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid new Doctor ID: {new_doctor_id}")
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid new Doctor ID: {new_doctor_id}(MedicalStudyService)")
         
 
         updated_study = self.__medical_study_repo.update(db, db_obj=db_study, obj_in=update_data)
+        log.success(f"Study updated successfully (MedicalStudyService)")
         return MedicalStudyResponseDTO.model_validate(updated_study)

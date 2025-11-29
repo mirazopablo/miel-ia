@@ -78,14 +78,7 @@ async def register_user(
     """Registrar un nuevo usuario"""
     try:
 
-        all_roles = db.query(Role).all()
-        print("   📋 Roles en DB:")
-        for role in all_roles:
-            print(f"     - {role.id} : {role.name}")
-        
-        direct_search = db.query(Role).filter(Role.id == user_data.role_id).first()
-        print(f"   🔍 Búsqueda directa: {direct_search is not None}")
-        
+        all_roles = db.query(Role).all()        
         role = role_service.get_role(user_data.role_id)
         
         if not role:
@@ -110,7 +103,7 @@ async def register_user(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred: {str(e)}"
+            detail=f"An unexpected error occurred(api/v1/auth/register): {str(e)}"
         )
 
 @router.get("/me/test-token", include_in_schema=settings.ENVIRONMENT == "development")

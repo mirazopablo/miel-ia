@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 from typing import Optional
 import os
 from dotenv import load_dotenv
+from loguru import logger as log
+from .config import settings
 
 load_dotenv()
 
@@ -22,11 +24,7 @@ pwd_context = CryptContext(
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verifica si una contraseña coincide con su versión hasheada"""
-    try:
-        print(f"🔍 [SECURITY DEBUG] Verificando contraseña:")
-        print(f"  - Contraseña plana: '{plain_password}'")
-        print(f"  - Hash almacenado: {hashed_password[:50]}...")
-        
+    try:      
         if not hashed_password.startswith('$argon2'):
             raise ValueError("Unknown hash format, expected Argon2 hash.")
             return False
@@ -73,6 +71,26 @@ def decode_access_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
+    except JWTError:
+        return None
+
+def create_password_reset_token(email: str) -> str:
+    """Crea un token específico para recuperación de contraseña"""
+    expire = datetime.utcnow() + timedelta(minutes=settings.RESET_TOKEN_EXPIRE_MINUTES)
+    to_encode = {"sub": email, "type": "password_reset", "exp": expire}
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+def verify_password_reset_token(token: str) -> Optional[str]:
+    """
+    Verifica el token de recuperación y devuelve el email si es válido.
+    Retorna None si es inválido o expiró.
+    """
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("type") != "password_reset":
+            return None
+        return payload.get("sub")
     except JWTError:
         return None
 

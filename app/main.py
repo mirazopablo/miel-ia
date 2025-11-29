@@ -15,6 +15,10 @@ from .api.routes.diagnose import router as diagnose_router
 from .api.v1.auth import router as auth_router
 from .api.v1.role import router as role_router
 from .api.v1.register import router as register_router
+from .api.v1.password_recovery import router as password_recovery_router
+from loguru import logger as log
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -30,13 +34,11 @@ async def lifespan(app: FastAPI):
                 log.warning("DB connection failed, continuing in development mode without DB.")
             else:
                 log.error("Database required in production mode")
-                raise Exception("Database connection failed")
     except Exception as e:
-        raise Exception(f"Database connection error: {str(e)}")
         if settings.is_development:
             log.warning("🔧 Continuing in development mode...")
         else:
-            raise Exception(f"Database connection failed: {str(e)}")
+            log.error(f"Database connection failed: {str(e)}")
     
     yield
 
@@ -66,6 +68,7 @@ app.include_router(diagnose_router)
 app.include_router(auth_router)
 app.include_router(role_router)
 app.include_router(register_router)
+app.include_router(password_recovery_router, prefix="/api/v1/auth", tags=["Auth"])
 
 
 @app.get("/", tags=["Root"])

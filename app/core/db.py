@@ -7,6 +7,8 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 from urllib.parse import quote_plus
+from loguru import logger as log
+
 
 Base = declarative_base()
 
@@ -59,7 +61,6 @@ def check_database_connection():
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
-        log.info("Conexión a MySQL verificada exitosamente")
         return True
     except Exception as e:
         log.error(f"Error en conexión a MySQL: {e}")
@@ -71,7 +72,6 @@ def create_tables():
     """
     try:
         Base.metadata.create_all(bind=engine)
-        log.info("Tablas de MySQL creadas exitosamente")
     except Exception as e:
         raise ValueError(f"Error al crear las tablas en MySQL: {e}")
 

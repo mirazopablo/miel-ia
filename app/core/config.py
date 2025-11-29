@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 from sqlalchemy import text
 from urllib.parse import quote_plus
+from loguru import logger as log
 
 load_dotenv()
 
@@ -28,6 +29,11 @@ class Settings(BaseSettings):
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+    RESET_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("RESET_TOKEN_EXPIRE_MINUTES", "60"))
+    
+    # Email Settings
+    EMAILS_ENABLED: bool = True
+    EMAIL_BACKEND: str = "file"  # Options: "file", "console"
     
     ALLOWED_ORIGINS: Union[str, List[str]] = "*"
     ALLOWED_METHODS: Union[str, List[str]] = "*"
@@ -95,7 +101,6 @@ class Settings(BaseSettings):
 
 try:
     settings = Settings()
-    log.info ("Successfully loaded configuration settings.")
 
 except Exception as e:
     log.error(f"Error loading configuration: {e}")

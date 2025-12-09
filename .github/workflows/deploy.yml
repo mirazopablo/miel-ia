@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
     - name: Checkout code
@@ -21,7 +21,6 @@ jobs:
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         port: 22
         timeout: 60s
-        debug: true
         script: |
           # Verificación: Asegurar que MySQL externo esté corriendo
           echo "🔍 Verificando estado de MySQL..."

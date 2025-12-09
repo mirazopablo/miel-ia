@@ -20,13 +20,12 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         port: 22
-        timeout: 60s
+        timeout: 30s
         script: |
           # Verificación: Asegurar que MySQL externo esté corriendo
           echo "🔍 Verificando estado de MySQL..."
           if ! docker ps | grep -q mysql; then
             echo "⚠️  MySQL no detectado. Intentando iniciar..."
-            # Asumimos ruta /home/ubuntu/mysql segun instruccion
             if [ -d "/home/ubuntu/mysql" ]; then
               cd /home/ubuntu/mysql
               docker compose up -d
@@ -34,19 +33,34 @@ jobs:
               sleep 10
             else
                echo "❌ Error: Carpeta /home/ubuntu/mysql no encontrada. No se puede iniciar BD."
-               # No hacemos exit 1 para intentar deployar de todas formas,
-               # pero idealmente aquí debería fallar si es critico.
             fi
           else
             echo "✅ MySQL está corriendo."
           fi
 
-          # Navegar al directorio del proyecto
-          cd ${{ secrets.PROJECT_PATH }}
+          # Definir directorio y asegurar que el secreto existe
+          PROJECT_DIR="${{ secrets.PROJECT_PATH }}"
           
-          # Descargar últimos cambios
-          git pull origin main
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "❌ Error Crítico: El secreto PROJECT_PATH está vacío o no se leyó correctamente."
+            exit 1
+          fi
+
+          echo "📂 Desplegando en: $PROJECT_DIR"
           
-          # Levantar/Reconstruir contenedores en modo detached (-d)
-          # --build asegura que si cambió el Dockerfile se reconstruya
+          # Crear directorio si no existe
+          mkdir -p "$PROJECT_DIR"
+          cd "$PROJECT_DIR"
+
+          # Verificar si es un repo git, si no, clonar (First Deploy)
+          if [ ! -d ".git" ]; then
+            echo "🌱 El directorio no es un repositorio Git. Clonando..."
+            # Nota: Esto requiere que el repo sea público o que haya credenciales configuradas
+            git clone https://github.com/${{ github.repository }} .
+          else
+            echo "⬇️ Actualizando código existente..."
+            git pull origin main
+          fi
+          
+          # Levantar contenedores
           docker compose up -d --build --remove-orphans

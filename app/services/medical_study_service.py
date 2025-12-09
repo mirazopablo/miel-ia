@@ -96,7 +96,7 @@ class MedicalStudyService:
             return (
                 role_map.get('Admin'),
                 role_map.get('Doctor'), 
-                role_map.get('Patient')
+                role_map.get('Patient'),
                 role_map.get('Technician')
             )
         except Exception as e:

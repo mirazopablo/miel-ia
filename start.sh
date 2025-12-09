@@ -2,70 +2,51 @@
 
 echo "🚀 Iniciando Miel-IA..."
 
-# Función para probar conexión a Azure SQL Server
-test_azure_connection() {
-    echo "🔍 Probando conexión a Azure SQL Server..."
-    
-    # Intentar conectar usando Python
-    python3 -c "
-import os
-import sys
-sys.path.append('/app')
-from app.core.config import settings
+# Verificar conexión a MySQL
+max_retries=30
+count=0
 
+echo "🔍 Verificando disponibilidad de base de datos..."
+
+# Loop de espera hasta que la base de datos responda
+# Usamos un pequeño script de python para intentar conectar
+while [ $count -lt $max_retries ]; do
+    python3 -c "
+import sys
+import os
+from sqlalchemy import create_engine, text
+sys.path.append('/app')
 try:
-    if 'sqlite' not in settings.DATABASE_URL.lower():
-        from sqlalchemy import create_engine
-        engine = create_engine(settings.DATABASE_URL, connect_args={'connection_timeout': 5})
-        with engine.connect() as conn:
-            conn.execute('SELECT 1')
-        print('✅ Conexión a Azure SQL Server exitosa')
-        sys.exit(0)
-    else:
-        print('📝 Usando SQLite desde configuración')
-        sys.exit(1)
+    from app.core.config import settings
+    db_uri = settings.DATABASE_URL
+    
+    engine = create_engine(db_uri)
+    with engine.connect() as conn:
+        conn.execute(text('SELECT 1'))
+    print('✅ Base de datos lista!')
+    sys.exit(0)
 except Exception as e:
-    print(f'❌ Error conectando a Azure SQL Server: {e}')
+    print(f'⏳ Esperando a base de datos... ({e})')
     sys.exit(1)
 "
-    return $?
-}
+    if [ $? -eq 0 ]; then
+        break
+    fi
+    
+    count=$((count+1))
+    echo "Retrying in 2 seconds... ($count/$max_retries)"
+    sleep 2
+done
 
-# Configurar fallback a SQLite si Azure SQL Server no está disponible
-if ! test_azure_connection; then
-    echo "🔄 Configurando fallback a SQLite..."
-    export DATABASE_URI="sqlite:///./test.db"
-    echo "📊 Usando base de datos local: $DATABASE_URI"
+if [ $count -eq $max_retries ]; then
+    echo "❌ Error: No se pudo conectar a la base de datos después de $max_retries intentos."
+    exit 1
 fi
 
-# Crear tablas si es necesario
-echo "🏗️  Verificando/creando estructura de base de datos..."
-python3 -c "
-import sys
-sys.path.append('/app')
-from app.core.db import create_tables, check_database_connection
-from app.core.config import settings
-
-print(f'📊 Base de datos configurada: {settings.DATABASE_URL}')
-
-if check_database_connection():
-    print('✅ Conexión a base de datos exitosa')
-    try:
-        create_tables()
-        print('🏗️  Estructura de base de datos verificada')
-    except Exception as e:
-        print(f'⚠️  Error creando tablas: {e}')
-else:
-    print('❌ No se pudo conectar a la base de datos')
-    exit(1)
-"
+# Migraciones (si aplica)
+# echo "Running migrations..."
+# alembic upgrade head
 
 # Iniciar la aplicación
 echo "🌟 Iniciando servidor FastAPI..."
-if [ "$ENVIRONMENT" = "production" ]; then
-    echo "🚀 Modo producción"
-    exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
-else
-    echo "🔧 Modo desarrollo"
-    exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-fi
+exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1

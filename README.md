@@ -1,166 +1,167 @@
-# Miel-IA 🧠💡
+# Miel-IA - API de Diagnóstico Médico Inteligente 🧠
 
-Miel-IA is an intelligent medical diagnostic support system designed to analyze electromyography (EMG) data and determine the potential presence of Guillain-Barré Syndrome (GBS). Using multiple machine learning models and a microservices-based architecture (or simplified monolithic setup as needed), Miel-IA offers binary results and risk classification in an orchestrated and precise manner.
+Miel-IA es una API RESTful de alto rendimiento diseñada como sistema de soporte al diagnóstico médico. Su núcleo integra modelos de aprendizaje automático (Machine Learning) orquestados mediante el patrón Saga para analizar estudios de electromiografía (EMG) y detectar patrones asociados al Síndrome de Guillain-Barré.
+
+Este proyecto destaca por una arquitectura robusta, segura y modular, preparada para escalar desde un monolito modular hacia microservicios.
 
 ---
 
-## 🏗 Architecture
+## 🚀 Características Principales
 
-The system follows a **SAGA orchestration pattern**, running sequentially to prevent server overload and facilitate scaling. It includes:
+### 🛡️ Seguridad y Autenticación
+- **JWT (JSON Web Tokens)**: Autenticación segura y sin estado (stateless).
+- **RBAC (Role-Based Access Control)**: Gestión granular de permisos (Admin, Doctor, Investigador).
+- **Argon2 Hashing**: Almacenamiento de contraseñas con estándares criptográficos modernos.
+- **Recuperación Local**: Sistema de restablecimiento de credenciales gestionado localmente (para entornos de alta seguridad o sin salida SMTP).
 
-- **REST API** built with **FastAPI**
-- **Binary ML models** to predict the presence of GBS:
+### 🤖 Inteligencia Artificial y ML
+- **Orquestación Saga**: Ejecución secuencial y coordinada de múltiples modelos predictivos.
+- **Ensemble Voting**: Sistema de decisión por consenso utilizando:
   - Random Forest
   - XGBoost
-  - Linear Regression
-- **Decision service** that aggregates binary results to determine a possible POSITIVE match
-- **Classification ML models** to assess risk level:
-  - HIGH, MEDIUM, or LOW
-- **Classification service** that combines the classification model outputs
-- **PostgreSQL database in Docker** managed with SQLAlchemy
+  - Regresión Logística
+- **Doble Capa de Análisis**:
+  1. **Detección Binaria**: Presencia/Ausencia de patología.
+  2. **Clasificación de Riesgo**: Evaluacion de severidad (ALTO, MEDIO, BAJO).
 
-### 📊 Mermaid Diagram
+### 🏗️ Arquitectura Técnica
+- **FastAPI**: Framework moderno y asíncrono para alto rendimiento.
+- **SQLAlchemy & PostgreSQL**: Persistencia robusta y relacional.
+- **Docker Ready**: Contenerización completa para despliegue consistente.
+- **Clean Architecture**: Separación clara de responsabilidades (Rutas, Servicios, Repositorios).
+
+### 📊 Diagrama de Flujo del Diagnóstico
+
 ```mermaid
----
-config:
-  theme: dark
-  look: classic
----
-flowchart TD
- subgraph subGraph0["🧩 API REST (FastAPI)"]
-        A1["Entrada: Datos EMG"]
-        A2["Salida: Resultado diagnóstico"]
-  end
- subgraph subGraph1["🧠 Orquestador (Caso de uso principal)"]
-        ORQ["Orquestador"]
-  end
- subgraph subGraph2["🤖 Modelos de Detección Binaria"]
-        B1["Random Forest Binario"]
-        B2["XGBoost Binario"]
-        B3["Logistic Regression Binario"]
-  end
- subgraph subGraph3["🧪 Modelos de Clasificación"]
-        C1["Random Forest Clasificación"]
-        C2["XGBoost Clasificación"]
-        C3["Logistic Regression Clasificación"]
-  end
- subgraph subGraph4["🗃️ Base de Datos de Pacientes"]
-        DB["DB MySQL (consultar/guardar)"]
-  end
-    A1 --> ORQ
-    ORQ --> B1 & B2 & B3 & C1 & C2 & C3 & DB & A2
-
+graph TD
+    User([👤 Usuario / Doctor]) -->|Sube CSV| API[API Gateway /diagnose]
+    API -->|Valida Formato| Service[Diagnose Service]
+    
+    subgraph "🔍 Pipeline de ML (Saga)"
+        Service -->|1. Preprocesamiento| Val{Validación Datos}
+        Val -->|OK| Bin[🤖 Modelos Binarios]
+        Val -->|Error| Err([❌ Error 400])
+        
+        subgraph "Ensemble Binario"
+            Bin --> RF1[Random Forest]
+            Bin --> XGB1[XGBoost]
+            Bin --> LR1[Log. Regression]
+        end
+        
+        RF1 & XGB1 & LR1 --> Vote{🗳️ Voto Mayoría >= 2?}
+        
+        Vote -->|No| Neg([🟢 Negativo])
+        Vote -->|Si| Class[🧪 Clasificación de Riesgo]
+        
+        subgraph "Ensemble Clasificación"
+            Class --> RF2[Random Forest]
+            Class --> XGB2[XGBoost]
+            Class --> LR2[Log. Regression]
+        end
+        
+        RF2 & XGB2 & LR2 --> Level([🔴 Positivo - Nivel X])
+    end
+    
+    Neg & Level --> SHAP[📉 Explicabilidad SHAP]
+    SHAP --> DB[(💾 Base de Datos)]
+    DB --> JSON[Respuesta JSON]
 ```
 
 ---
 
-## 🧪 User Stories (Kanban ToDo)
+## 🛠️ Stack Tecnológico
 
-- **US-01**: As a researcher, I want to use the EMG dataset to train the model, to improve the accuracy in detecting GBS.
-- **US-02**: As a developer, I want to train a machine learning model to provide a compatibility score with GBS.
-- **US-03**: As a developer, I want to integrate the REST API with the AI model, to process EMG data and return analysis results.
-- **US-04**: As a doctor, I want to visualize the analysis results in a graphical and intuitive way, to facilitate interpretation of the automated diagnosis.
-
----
-
-## 🧬 General Workflow
-
-1. The user (doctor or system) uploads a labeled CSV file.
-2. The REST API starts a **synchronous sequential saga**:
-   - The three binary models are executed one by one.
-   - If at least 2 models agree (based on a threshold), the result is considered **POSITIVE**.
-3. If the result is POSITIVE, the same CSV is sent to the three classification models.
-4. The **classification service** evaluates and reports the risk level (HIGH/MEDIUM/LOW).
-5. The final response is returned to the REST API.
+| Componente | Tecnología | Descripción |
+|------------|------------|-------------|
+| **Core API** | Python 3.10+, FastAPI | Motor asíncrono y tipado. |
+| **Base de Datos** | PostgreSQL 15+ | Almacenamiento principal relacional. |
+| **ORM** | SQLAlchemy | Abstracción de base de datos. |
+| **ML Engine** | Scikit-learn, XGBoost | Entrenamiento e inferencia de modelos. |
+| **Data Processing** | Pandas, NumPy | Manipulación eficiente de datos numéricos. |
+| **Server** | Uvicorn | Servidor ASGI de producción. |
 
 ---
 
-## 📦 Installation & Execution
+## 📋 Requisitos Previos
 
-### Requirements
-- Python 3.10+
-- Docker (optional for PostgreSQL)
-
-### Install dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### Configuration
-Create a `.env` file at the root with the following content:
-```
-DATABASE_URL=postgresql://user:password@localhost:5432/mielia_db
-THRESHOLD_BINARY=0.6
-THRESHOLD_CLASSIFY=0.5
-```
-
-### Run API
-```bash
-uvicorn main:app --reload
-```
-
-### Train models
-```bash
-python train.py
-```
+- Docker y Docker Compose
+- Python 3.10 o superior (para ejecución local sin contenedores)
+- Cliente PostgreSQL (opcional)
 
 ---
 
-## 🔎 Project Structure
-```
-miel_ia/
-├── .env
-├── main.py
-├── train.py
-├── saga.py
-├── decision_service.py
-├── classification_service.py
-├── requirements.txt
-├── models/
-│   ├── binary_random_forest.py
-│   ├── binary_xgboost.py
-│   ├── binary_linear_regression.py
-│   ├── classify_random_forest.py
-│   ├── classify_xgboost.py
-│   ├── classify_linear_regression.py
-└── db/
-    └── models.py
-```
+## 🚀 Instalación y Despliegue
+
+### Opción A: Despliegue con Docker (Recomendado)
+
+1. **Clonar el repositorio**:
+   ```bash
+   git clone <url-del-repo>
+   cd miel-ia
+   ```
+
+2. **Configurar variables de entorno**:
+   Crea un archivo `.env` basado en `.env-example`:
+   ```bash
+   cp .env-example .env
+   ```
+
+3. **Iniciar servicios**:
+   ```bash
+   docker-compose up -d --build
+   ```
+
+### Opción B: Ejecución Local
+
+1. **Crear entorno virtual**:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate
+   ```
+
+2. **Instalar dependencias**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Ejecutar migraciones y servidor**:
+   ```bash
+   alembic upgrade head
+   uvicorn app.main:app --reload
+   ```
 
 ---
 
-## 💡 Technologies Used
+## 🔐 Gestión de Accesos
 
-- [FastAPI](https://fastapi.tiangolo.com/)
-- [Scikit-learn](https://scikit-learn.org/)
-- [XGBoost](https://xgboost.readthedocs.io/)
-- [Pandas](https://pandas.pydata.org/)
-- [SQLAlchemy](https://www.sqlalchemy.org/)
-- [Uvicorn](https://www.uvicorn.org/)
-- [Python-dotenv](https://pypi.org/project/python-dotenv/)
+### Recuperación de Contraseña
+> [!NOTE]
+> Miel-IA está configurado con máxima privacidad. **No utiliza servicios externos de email (SMTP)** para la recuperación de cuentas.
 
----
-
-## 🚀 Project Status
-
-Currently under development. Initial model training implementation in progress (US-01 and US-02).
+El proceso de restablecimiento se realiza de forma administrativa o local:
+1. El usuario solicita recuperación vía API.
+2. El administrador utiliza el script seguro de gestión:
+   ```bash
+   python reset_password.py
+   ```
+   Este script permite establecer una nueva contraseña directamente interactuando de forma segura con la base de datos.
 
 ---
 
-## 📌 Additional Notes
+## 🚧 Estado del Proyecto
 
-- The architecture may scale toward full microservices if justified in a production environment. For now, it remains monolithic to simplify early development.
-- The project is run locally. No cloud deployment is planned yet.
+**Versión Actual**: `0.1.0-beta`
 
----
+> [!IMPORTANT]
+> **En Proceso de Despliegue**: Actualmente se están realizando configuraciones finales en la infraestructura de producción. Es posible que el entorno de staging presente intermitencias momentáneas.
 
-## 👨‍🔬 Author
-
-Developed by [Pablo Mirazo](https://x.com/iamD3XTRO) - Computer Engineering student.
-
-This project was created to provide intelligent diagnostic tools for healthcare professionals, particularly for early detection of Guillain-Barré Syndrome.
+El desarrollo se encuentra activo, con foco en la optimización de los hiperparámetros de los modelos de clasificación.
 
 ---
 
-> "The best diagnosis is the one that comes in time." 🧠⚕️
+## 👨‍💻 Autor
 
+Desarrollado con ❤️ y código por **Pablo Mirazo**.
+*Ingeniería de Software & Data Science*
+
+> "La tecnología al servicio de la salud es el puente hacia un futuro con mejor calidad de vida."

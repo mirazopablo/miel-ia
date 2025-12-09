@@ -38,13 +38,8 @@ jobs:
             echo "✅ MySQL está corriendo."
           fi
 
-          # Definir directorio y asegurar que el secreto existe
-          PROJECT_DIR="${{ secrets.PROJECT_PATH }}"
-          
-          if [ -z "$PROJECT_DIR" ]; then
-            echo "❌ Error Crítico: El secreto PROJECT_PATH está vacío o no se leyó correctamente."
-            exit 1
-          fi
+          # Definir directorio (Hardcoded para evitar problemas con secrets)
+          PROJECT_DIR="/home/ubuntu/miel-ia"
 
           echo "📂 Desplegando en: $PROJECT_DIR"
           

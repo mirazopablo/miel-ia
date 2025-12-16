@@ -1,130 +1,130 @@
-# Miel-IA - API de Diagnóstico Médico Inteligente 🧠
+# Miel-IA - Intelligent Medical Diagnosis API
 
-Miel-IA es una API RESTful de alto rendimiento diseñada como sistema de soporte al diagnóstico médico. Su núcleo integra modelos de aprendizaje automático (Machine Learning) orquestados mediante el patrón Saga para analizar estudios de electromiografía (EMG) y detectar patrones asociados al Síndrome de Guillain-Barré.
+Miel-IA is a high-performance RESTful API designed as a medical diagnosis support system. Its core integrates Machine Learning models orchestrated via the Saga pattern to analyze electromyography (EMG) studies and detect patterns associated with Guillain-Barré Syndrome.
 
-Este proyecto destaca por una arquitectura robusta, segura y modular, preparada para escalar desde un monolito modular hacia microservicios.
+This project highlights a robust, secure, and modular architecture, ready to scale from a modular monolith to microservices.
 
 ---
 
-## 🚀 Características Principales
+## Key Features
 
-### 🛡️ Seguridad y Autenticación
-- **JWT (JSON Web Tokens)**: Autenticación segura y sin estado (stateless).
-- **RBAC (Role-Based Access Control)**: Gestión granular de permisos (Admin, Doctor, Investigador).
-- **Argon2 Hashing**: Almacenamiento de contraseñas con estándares criptográficos modernos.
-- **Recuperación Local**: Sistema de restablecimiento de credenciales gestionado localmente (para entornos de alta seguridad o sin salida SMTP).
+###  Security and Authentication
+- **JWT (JSON Web Tokens)**: Secure and stateless authentication.
+- **RBAC (Role-Based Access Control)**: Granular permission management (Admin, Doctor, Researcher).
+- **Argon2 Hashing**: Password storage with modern cryptographic standards.
+- **Local Recovery**: Locally managed credential reset system (for high-security environments or without SMTP output).
 
-### 🤖 Inteligencia Artificial y ML
-- **Orquestación Saga**: Ejecución secuencial y coordinada de múltiples modelos predictivos.
-- **Ensemble Voting**: Sistema de decisión por consenso utilizando:
+###  Artificial Intelligence and ML
+- **Saga Orchestration**: Sequential and coordinated execution of multiple predictive models.
+- **Ensemble Voting**: Consensus decision system using:
   - Random Forest
   - XGBoost
-  - Regresión Logística
-- **Doble Capa de Análisis**:
-  1. **Detección Binaria**: Presencia/Ausencia de patología.
-  2. **Clasificación de Riesgo**: Evaluacion de severidad (ALTO, MEDIO, BAJO).
+  - Logistic Regression
+- **Double Analysis Layer**:
+  1. **Binary Detection**: Presence/Absence of pathology.
+  2. **Risk Classification**: Severity evaluation (HIGH, MEDIUM, LOW).
 
-### 🏗️ Arquitectura Técnica
-- **FastAPI**: Framework moderno y asíncrono para alto rendimiento.
-- **SQLAlchemy & PostgreSQL**: Persistencia robusta y relacional.
-- **Docker Ready**: Contenerización completa para despliegue consistente.
-- **Clean Architecture**: Separación clara de responsabilidades (Rutas, Servicios, Repositorios).
+###  Technical Architecture
+- **FastAPI**: Modern and asynchronous framework for high performance.
+- **SQLAlchemy & PostgreSQL**: Robust and relational persistence.
+- **Docker Ready**: Complete containerization for consistent deployment.
+- **Clean Architecture**: Clear separation of responsibilities (Routes, Services, Repositories).
 
-### 📊 Diagrama de Flujo del Diagnóstico
+###  Diagnosis Flow Diagram
 
 ```mermaid
 graph TD
-    User([👤 Usuario / Doctor]) -->|Sube CSV| API[API Gateway /diagnose]
-    API -->|Valida Formato| Service[Diagnose Service]
-    
-    subgraph "🔍 Pipeline de ML (Saga)"
-        Service -->|1. Preprocesamiento| Val{Validación Datos}
-        Val -->|OK| Bin[🤖 Modelos Binarios]
+    User([👤 User / Doctor]) -->|Uploads CSV| API[API Gateway /diagnose]
+    API -->|Validates Format| Service[Diagnose Service]
+
+    subgraph "🔍 ML Pipeline (Saga)"
+        Service -->|1. Preprocessing| Val{Data Validation}
+        Val -->|OK| Bin[🤖 Binary Models]
         Val -->|Error| Err([❌ Error 400])
-        
-        subgraph "Ensemble Binario"
+
+        subgraph "Binary Ensemble"
             Bin --> RF1[Random Forest]
             Bin --> XGB1[XGBoost]
             Bin --> LR1[Log. Regression]
         end
-        
-        RF1 & XGB1 & LR1 --> Vote{🗳️ Voto Mayoría >= 2?}
-        
-        Vote -->|No| Neg([🟢 Negativo])
-        Vote -->|Si| Class[🧪 Clasificación de Riesgo]
-        
-        subgraph "Ensemble Clasificación"
+
+        RF1 & XGB1 & LR1 --> Vote{🗳️ Majority Vote >= 2?}
+
+        Vote -->|No| Neg([🟢 Negative])
+        Vote -->|Yes| Class[🧪 Risk Classification]
+
+        subgraph "Classification Ensemble"
             Class --> RF2[Random Forest]
             Class --> XGB2[XGBoost]
             Class --> LR2[Log. Regression]
         end
-        
-        RF2 & XGB2 & LR2 --> Level([🔴 Positivo - Nivel X])
+
+        RF2 & XGB2 & LR2 --> Level([🔴 Positive - Level X])
     end
-    
-    Neg & Level --> SHAP[📉 Explicabilidad SHAP]
-    SHAP --> DB[(💾 Base de Datos)]
-    DB --> JSON[Respuesta JSON]
+
+    Neg & Level --> SHAP[📉 SHAP Explainability]
+    SHAP --> DB[(💾 Database)]
+    DB --> JSON[JSON Response]
 ```
 
 ---
 
-## 🛠️ Stack Tecnológico
+## 🛠️Tech Stack
 
-| Componente | Tecnología | Descripción |
-|------------|------------|-------------|
-| **Core API** | Python 3.10+, FastAPI | Motor asíncrono y tipado. |
-| **Base de Datos** | PostgreSQL 15+ | Almacenamiento principal relacional. |
-| **ORM** | SQLAlchemy | Abstracción de base de datos. |
-| **ML Engine** | Scikit-learn, XGBoost | Entrenamiento e inferencia de modelos. |
-| **Data Processing** | Pandas, NumPy | Manipulación eficiente de datos numéricos. |
-| **Server** | Uvicorn | Servidor ASGI de producción. |
-
----
-
-## 📋 Requisitos Previos
-
-- Docker y Docker Compose
-- Python 3.10 o superior (para ejecución local sin contenedores)
-- Cliente PostgreSQL (opcional)
+| Component | Technology | Description |
+|-----------|------------|-------------|
+| **Core API** | Python 3.10+, FastAPI | Asynchronous and typed engine. |
+| **Database** | mysql:8.0.40-bookworm | Primary relational storage. |
+| **ORM** | SQLAlchemy | Database abstraction. |
+| **ML Engine** | Scikit-learn, XGBoost | Model training and inference. |
+| **Data Processing** | Pandas, NumPy | Efficient numerical data manipulation. |
+| **Server** | Uvicorn | Production ASGI server. |
 
 ---
 
-## 🚀 Instalación y Despliegue
+##  Prerequisites
 
-### Opción A: Despliegue con Docker (Recomendado)
+- Docker and Docker Compose
+- Python 3.10 or higher (for local execution without containers)
+- Compose for Mysql
 
-1. **Clonar el repositorio**:
+---
+
+##  Installation and Deployment
+
+### Option A: Deployment with Docker (Recommended)
+
+1. **Clone the repository**:
    ```bash
-   git clone <url-del-repo>
+   git clone https://github.com/mirazopablo/miel-ia
    cd miel-ia
    ```
 
-2. **Configurar variables de entorno**:
-   Crea un archivo `.env` basado en `.env-example`:
+2. **Configure environment variables**:
+   Create a `.env` file based on `.env-example`:
    ```bash
    cp .env-example .env
    ```
 
-3. **Iniciar servicios**:
+3. **Start services**:
    ```bash
    docker-compose up -d --build
    ```
 
-### Opción B: Ejecución Local
+### Option B: Local Execution
 
-1. **Crear entorno virtual**:
+1. **Create virtual environment**:
    ```bash
    python -m venv venv
    source venv/bin/activate
    ```
 
-2. **Instalar dependencias**:
+2. **Install dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Ejecutar migraciones y servidor**:
+3. **Run migrations and server**:
    ```bash
    alembic upgrade head
    uvicorn app.main:app --reload
@@ -132,36 +132,33 @@ graph TD
 
 ---
 
-## 🔐 Gestión de Accesos
+## Access Management
 
-### Recuperación de Contraseña
+### Password Recovery
 > [!NOTE]
-> Miel-IA está configurado con máxima privacidad. **No utiliza servicios externos de email (SMTP)** para la recuperación de cuentas.
+> Since this is an MVP, it does not currently use SMTP servers for account recovery, it uses a local script to reset the password.
 
-El proceso de restablecimiento se realiza de forma administrativa o local:
-1. El usuario solicita recuperación vía API.
-2. El administrador utiliza el script seguro de gestión:
+The reset process is performed administratively or locally:
+1. The user requests recovery via API.
+2. The administrator uses the management script:
    ```bash
    python reset_password.py
    ```
-   Este script permite establecer una nueva contraseña directamente interactuando de forma segura con la base de datos.
+   This script allows setting a new password directly.
 
 ---
 
-## 🚧 Estado del Proyecto
+## Project Status
 
-**Versión Actual**: `0.1.0-beta`
+**Current Version**: `0.1.0-beta`
 
 > [!IMPORTANT]
-> **En Proceso de Despliegue**: Actualmente se están realizando configuraciones finales en la infraestructura de producción. Es posible que el entorno de staging presente intermitencias momentáneas.
+> **Deployment in Process**: Final configurations are currently being made on the production infrastructure. The staging environment may experience momentary intermittency.
 
-El desarrollo se encuentra activo, con foco en la optimización de los hiperparámetros de los modelos de clasificación.
+Development is active, focusing on optimizing the hyperparameters of the classification models.
 
 ---
 
-## 👨‍💻 Autor
+## Author
 
-Desarrollado con ❤️ y código por **Pablo Mirazo**.
-*Ingeniería de Software & Data Science*
-
-> "La tecnología al servicio de la salud es el puente hacia un futuro con mejor calidad de vida."
+Mirazo Pablo: Computer Engineering Student

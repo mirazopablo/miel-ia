@@ -4,6 +4,8 @@ Miel-IA is a high-performance RESTful API designed as a medical diagnosis suppor
 
 This project highlights a robust, secure, and modular architecture, ready to scale from a modular monolith to microservices.
 
+**Frontend Repository**: [miel-ia-front](https://github.com/mirazopablo/miel-ia-front)
+
 ---
 
 ## Key Features

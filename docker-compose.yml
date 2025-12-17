@@ -22,7 +22,7 @@ services:
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
     volumes:
       # Montar código para desarrollo (opcional - en prod esto no suele usarse pero lo dejo si lo necesitas)
-      - ./app:/app/app:ro
+      - ./app:/app/app
       - ./trained_models:/app/trained_models:ro
     restart: unless-stopped
     healthcheck:

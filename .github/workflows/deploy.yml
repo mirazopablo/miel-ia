@@ -20,7 +20,7 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         port: 22
-        timeout: 30s
+        timeout: 10m
         script: |
           # Verificación: Asegurar que MySQL externo esté corriendo
           echo "🔍 Verificando estado de MySQL..."

@@ -47,7 +47,7 @@ async def create_temp_role(
 async def get_all_roles(
     role_service: RoleService = Depends(get_role_service),
     db: Session = Depends(get_db),
-    current_user: UserOut = Depends(get_current_user)
+    # current_user: UserOut = Depends(get_current_user)
 
 ):
     """

@@ -22,6 +22,7 @@ python-jose[cryptography]==3.5.0
 argon2-cffi==25.1.0
 passlib==1.7.4
 shap==0.44.1
-numpy>=1.26.0,<2.0.0  # Compatible con Python 3.12 y SHAP
+numpy>=1.26.0,<2.0.0  
 PyMySQL==1.1.2
 loguru==0.7.3
+cryptography==46.0.3

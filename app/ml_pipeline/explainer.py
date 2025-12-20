@@ -182,7 +182,7 @@ class MLExplainer:
             explainer = shap.TreeExplainer(model)
             shap_values = explainer.shap_values(df)
 
-            if task_type == "classification" and isinstance(shap_values, list):
+            if isinstance(shap_values, list):
                 if len(shap_values) > prediction:
                     shap_values = shap_values[prediction]
                 else:

@@ -3,7 +3,7 @@ from fastapi import UploadFile, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import Optional
 from uuid import UUID
-
+from loguru import logger as log
 from ..infrastructure.repositories.file_manager_repo import FileStorageRepo
 from ..infrastructure.db.DTOs.file_manager_dto import FileStorageBaseDTO, FileStorageResponseDTO
 

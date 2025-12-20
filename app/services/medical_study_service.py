@@ -1,10 +1,12 @@
 from uuid import UUID
+from ..core.encryption import decrypt_data
 from sqlalchemy.orm import Session, joinedload 
 from sqlalchemy import or_
 from ..infrastructure.db.models.medical_study import MedicalStudy
 from ..infrastructure.db.models.user import User
-from fastapi import HTTPException, logger, status
+from fastapi import HTTPException, status
 from typing import List, Optional
+from loguru import logger as log
 
 from ..infrastructure.repositories.medical_study_repo import MedicalStudyRepo
 from ..infrastructure.repositories.user_repo import UserRepo
@@ -30,7 +32,7 @@ class MedicalStudyService:
         if not doctor:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Medical Study Service: Doctor not found.")
         
-        admin_role_id, doctor_role_id, patient_role_id = self.__get_role_ids_from_db(db)
+        admin_role_id, doctor_role_id, patient_role_id, technician_role_id = self.__get_role_ids_from_db(db)
         
         doctor_role_ids = [str(role.id) for role in doctor.roles]
         doctor_role_names = [role.name for role in doctor.roles]
@@ -70,6 +72,20 @@ class MedicalStudyService:
             if not technician:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Medical Study Service: Technician not found.")
 
+            technician_role_ids = [str(role.id) for role in technician.roles]
+            technician_role_names = [role.name for role in technician.roles]
+
+            has_technician_role = (
+                "Technician" in technician_role_names or 
+                str(technician_role_id) in technician_role_ids
+            )
+            
+            if not has_technician_role:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST, 
+                    detail=f"Medical Study Service: User is not a technician. User has roles: {technician_role_names}"
+                )
+
         try:
             study_dict = study_data.model_dump()
             study = self.__medical_study_repo.create(db, obj_in=study_dict)
@@ -100,6 +116,9 @@ class MedicalStudyService:
                 role_map.get('Technician')
             )
         except Exception as e:
+            print(f"DEBUG: Error in __get_role_ids_from_db: {e}")
+            import traceback
+            traceback.print_exc()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Error fetching roles from database: " + str(e)
@@ -118,6 +137,9 @@ class MedicalStudyService:
                 joinedload(MedicalStudy.doctor),
                 joinedload(MedicalStudy.technician)
             ).filter(MedicalStudy.id == str(study_id)).first()
+            
+            if not study:
+                return None
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -131,7 +153,7 @@ class MedicalStudyService:
                 "access_code": study.access_code,
                 "status": study.status,
                 "creation_date": study.created_at, 
-                "ml_results": study.ml_results,
+                "ml_results": decrypt_data(study.ml_results),
                 "clinical_data": study.clinical_data,
                 "csv_file_id": study.csv_file_id,
                 "patient": study.patient,
@@ -200,8 +222,14 @@ class MedicalStudyService:
         Verifica que un estudio exista y luego lo elimina.
         """
         study_to_delete = self.get_by_id(db, study_id=study_id)
+        if not study_to_delete:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Medical study not found"
+            )
+        result = self.__medical_study_repo.delete(db, id=study_to_delete.id)
         log.success(f"Study deleted successfully (MedicalStudyService)")
-        return self.__medical_study_repo.delete(db, id=study_to_delete.id)
+        return result
 
     def update(self, db: Session, *, study_id: UUID, study_update: MedicalStudyUpdateDTO):
         """

@@ -7,6 +7,7 @@ from .medical_study_service import MedicalStudyService
 from .file_manager_service import FileStorageService
 from ..infrastructure.db.DTOs.medical_study_dto import MedicalStudyUpdateDTO
 from ..ml_pipeline.pipeline import run_diagnosis_pipeline
+from ..core.encryption import encrypt_data
 from loguru import logger as log
 
 
@@ -16,10 +17,7 @@ class DiagnoseService:
         self.__file_service = file_service
 
     async def run_diagnosis_workflow(self, db: Session, study_id: UUID, file: UploadFile, user_id: UUID):
-        try:
-            print(f"🔍 DiagnoseService - Buscando estudio: {study_id}")
-            
-            # PRIMERO: Usar el servicio para obtener el estudio (que usa la consulta directa)
+        try:         
             study_dto = self.__study_service.get_by_id(db, study_id=study_id)
             
             if not study_dto:
@@ -35,11 +33,11 @@ class DiagnoseService:
                 joinedload(MedicalStudy.patient),
                 joinedload(MedicalStudy.doctor),
                 joinedload(MedicalStudy.technician)
-            ).filter(MedicalStudy.id == study_id).first()
+            ).filter(MedicalStudy.id == str(study_id)).first()
             
             if not study_model:
                 raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Internal server error: data inconsistency (DiagnoseService)"
                 )
             
@@ -78,9 +76,10 @@ class DiagnoseService:
 
             update_data = MedicalStudyUpdateDTO(
                 status="COMPLETED",
-                ml_results=json.dumps(ml_verdict),
+                ml_results=encrypt_data(json.dumps(ml_verdict)),
                 csv_file_id=saved_file.id
             )
+            
             
             updated_study = self.__study_service.update(db, study_id=study_id, study_update=update_data)
             log.success(f"Study updated successfully (DiagnoseService)")
@@ -89,9 +88,9 @@ class DiagnoseService:
         except HTTPException:
             raise
         except Exception as e:
-            log.error(f"❌ Unexpected error in diagnose workflow (DiagnoseService): {e}")
+            log.error(f"Unexpected error in diagnose workflow (DiagnoseService): {e}")
             import traceback
-            log.error(f"🔍 Traceback: {traceback.format_exc()}")
+            log.error(f"Traceback: {traceback.format_exc()}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Internal server error (DiagnoseService): {str(e)}"

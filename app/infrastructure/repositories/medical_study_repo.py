@@ -83,7 +83,7 @@ class MedicalStudyRepo(BaseRepository[MedicalStudy]):
         return db_obj
 
     def delete(self, db: Session, *, id: UUID) -> MedicalStudy:  
-        db_obj = db.query(self.__study_model).filter(self.__study_model.id == id).first()
+        db_obj = db.query(self.__study_model).filter(self.__study_model.id == str(id)).first()
         if not db_obj:
             raise HTTPException(status_code=404, detail="Medical study not found")
         

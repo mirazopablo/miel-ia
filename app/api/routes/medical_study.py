@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional, Union
 from enum import Enum
+from loguru import logger as log
 
 from ...infrastructure.db.DTOs.auth_schema import UserOut
 
@@ -43,15 +44,14 @@ def create_medical_study(
     """
     try:
         return study_service.create_study(db, study_data=study_data)
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        log.error(f"Error al crear el estudio: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al crear el estudio")
 
 @router.get("/search/", response_model=Union[List[MedicalStudyResponseDTO], MedicalStudyResponseDTO])
 def search_medical_studies(
     search_type: MedicalStudySearchType = Query(..., description="Tipo de búsqueda a realizar"),
-    study_id: Optional[int] = Query(None, description="ID del estudio (si search_type es 'id')"),
+    study_id: Optional[str] = Query(None, description="ID del estudio (si search_type es 'id')"),
     patient_dni: Optional[str] = Query(None, description="DNI del paciente (si search_type es 'patient_dni')"),
     access_code: Optional[str] = Query(None, description="Código de acceso del paciente (si search_type es 'patient_dni')"),
     patient_name: Optional[str] = Query(None, description="Nombre o apellido del paciente (si search_type es 'patient_name')"),
@@ -68,7 +68,7 @@ def search_medical_studies(
     if search_type == MedicalStudySearchType.ID:
         if not study_id:
             raise HTTPException(status_code=400, detail="study_id is required for 'id' search type")
-        return study_service.get_study_by_id(db, study_id=study_id)
+        return study_service.get_by_id(db, study_id=study_id)
         
     if search_type == MedicalStudySearchType.PATIENT_DNI:
         if not patient_dni or not access_code:
@@ -106,12 +106,12 @@ def delete_medical_study(
     db: Session = Depends(get_db),
     study_service: MedicalStudyService = Depends(get_medical_study_service),
     current_user: UserOut = Depends(get_current_user)
-) -> MessageResponse:
+):
     """
     Elimina un estudio médico por su ID.
     """
     study_service.delete_study(db, study_id=study_id)
-    return MessageResponse(message=f"Medical study with id {study_id} deleted successfully.")
+    return MessageResponse(message="Study deleted successfully")
 
 @router.patch("/{study_id}", response_model=MedicalStudyResponseDTO)
 def partial_update_study(

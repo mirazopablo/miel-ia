@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, status
 from sqlalchemy.orm import Session
 from uuid import UUID
-
+from loguru import logger as log
 from ...infrastructure.db.DTOs.auth_schema import UserOut
 from ...services.diagnose_service import DiagnoseService
 from ...infrastructure.db.DTOs.medical_study_dto import MedicalStudyResponseDTO
@@ -57,15 +57,12 @@ async def perform_diagnosis(
         
         db.commit() 
         return updated_study
-        
-    except HTTPException as he:
-        db.rollback()
-        return "HTTPException" in str(type(he)) and he or HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail=f"Internal server error: {str(he.detail)}"
-        )
     except Exception as e:
         db.rollback()
+        import traceback
+        error_trace = traceback.format_exc()
+        log.error(f"Unexpected error in diagnose workflow (DiagnoseService): {str(e)}\nTraceback: {error_trace}")
+        
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail=f"Unknown error: {str(e)}"

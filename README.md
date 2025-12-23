@@ -4,7 +4,7 @@ Miel-IA is a high-performance RESTful API designed as a medical diagnosis suppor
 
 This project highlights a robust, secure, and modular architecture, ready to scale from a modular monolith to microservices.
 
-**Frontend Repository**: [miel-ia-front](https://github.com/mirazopablo/miel-ia-front)
+Click here to go to the [**Frontend Repository**](https://github.com/mirazopablo/miel-ia-front)
 
 ---
 
@@ -36,13 +36,13 @@ This project highlights a robust, secure, and modular architecture, ready to sca
 
 ```mermaid
 graph TD
-    User([👤 User / Doctor]) -->|Uploads CSV| API[API Gateway /diagnose]
+    User([ User / Doctor]) -->|Uploads CSV| API[API Gateway /diagnose]
     API -->|Validates Format| Service[Diagnose Service]
 
-    subgraph "🔍 ML Pipeline (Saga)"
+    subgraph " ML Pipeline (Saga)"
         Service -->|1. Preprocessing| Val{Data Validation}
-        Val -->|OK| Bin[🤖 Binary Models]
-        Val -->|Error| Err([❌ Error 400])
+        Val -->|OK| Bin[ Binary Models]
+        Val -->|Error| Err([ Error 400])
 
         subgraph "Binary Ensemble"
             Bin --> RF1[Random Forest]
@@ -50,10 +50,10 @@ graph TD
             Bin --> LR1[Log. Regression]
         end
 
-        RF1 & XGB1 & LR1 --> Vote{🗳️ Majority Vote >= 2?}
+        RF1 & XGB1 & LR1 --> Vote{Majority Vote >= 2?}
 
-        Vote -->|No| Neg([🟢 Negative])
-        Vote -->|Yes| Class[🧪 Risk Classification]
+        Vote -->|No| Neg([ Negative])
+        Vote -->|Yes| Class[ Risk Classification]
 
         subgraph "Classification Ensemble"
             Class --> RF2[Random Forest]
@@ -61,11 +61,11 @@ graph TD
             Class --> LR2[Log. Regression]
         end
 
-        RF2 & XGB2 & LR2 --> Level([🔴 Positive - Level X])
+        RF2 & XGB2 & LR2 --> Level([ Positive - Level X])
     end
 
-    Neg & Level --> SHAP[📉 SHAP Explainability]
-    SHAP --> DB[(💾 Database)]
+    Neg & Level --> SHAP[ SHAP Explainability]
+    SHAP --> DB[( Database)]
     DB --> JSON[JSON Response]
 ```
 
@@ -75,7 +75,7 @@ graph TD
 
 | Component | Technology | Description |
 |-----------|------------|-------------|
-| **Core API** | Python 3.10+, FastAPI | Asynchronous and typed engine. |
+| **Core API** | Python 3.12, FastAPI | Asynchronous and typed engine. |
 | **Database** | mysql:8.0.40-bookworm | Primary relational storage. |
 | **ORM** | SQLAlchemy | Database abstraction. |
 | **ML Engine** | Scikit-learn, XGBoost | Model training and inference. |
@@ -87,7 +87,7 @@ graph TD
 ##  Prerequisites
 
 - Docker and Docker Compose
-- Python 3.10 or higher (for local execution without containers)
+- Python 3.12 (tested version, higher versions may not work because of NumPy)
 - Compose for Mysql
 
 ---
@@ -134,25 +134,10 @@ graph TD
 
 ---
 
-## Access Management
-
-### Password Recovery
-> [!NOTE]
-> Since this is an MVP, it does not currently use SMTP servers for account recovery, it uses a local script to reset the password.
-
-The reset process is performed administratively or locally:
-1. The user requests recovery via API.
-2. The administrator uses the management script:
-   ```bash
-   python reset_password.py
-   ```
-   This script allows setting a new password directly.
-
----
 
 ## Project Status
 
-**Current Version**: `0.1.0-beta`
+**Current Version**: `0.1`
 
 > [!IMPORTANT]
 > **Deployment in Process**: Final configurations are currently being made on the production infrastructure. The staging environment may experience momentary intermittency.

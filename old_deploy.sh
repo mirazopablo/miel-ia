@@ -9,10 +9,8 @@ LOCATION=eastus
 ACR_NAME=apimielia  # sin mayúsculas
 PORT_CONTAINER=8000
 
-# Login a Azure (si no lo hiciste ya)
 az login
 
-# Login al ACR (ya lo hiciste)
 az acr login --name $ACR_NAME
 
 # Construcción y subida de imagen

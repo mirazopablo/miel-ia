@@ -67,7 +67,7 @@ graph TD
         subgraph "Phase 1: Binary Ensemble"
             Bin --> RF1[Random Forest]
             Bin --> XGB1[XGBoost]
-            Bin --> LR1[Log. Regression (Keras)]
+            Bin --> LR1["Log. Regression (Keras)"]
         end
 
         RF1 & XGB1 & LR1 --> Vote1{Consensus?}
@@ -77,7 +77,7 @@ graph TD
         subgraph "Phase 2: Classification Ensemble"
             Class --> RF2[Random Forest]
             Class --> XGB2[XGBoost]
-            Class --> LR2[Log. Regression (Keras)]
+            Class --> LR2["Log. Regression (Keras)"]
         end
 
         RF2 & XGB2 & LR2 --> Vote2{Consensus?}

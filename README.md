@@ -1,151 +1,186 @@
-# Miel-IA - Intelligent Medical Diagnosis API
+# Miel-IA - Backend | Intelligent Medical Diagnosis API
 
-Miel-IA is a high-performance RESTful API designed as a medical diagnosis support system. Its core integrates Machine Learning models orchestrated via the Saga pattern to analyze electromyography (EMG) studies and detect patterns associated with Guillain-Barré Syndrome.
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115.0-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![TensorFlow](https://img.shields.io/badge/TensorFlow-2.10-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)](https://www.tensorflow.org/)
 
-This project highlights a robust, secure, and modular architecture, ready to scale from a modular monolith to microservices.
+> **High-performance RESTful API orchestrating an ensemble of Machine Learning models for the early detection of Guillain-Barré Syndrome via Electromyography (EMG) analysis.**
 
-Click here to go to the [**Frontend Repository**](https://github.com/mirazopablo/miel-ia-front)
+<div align="center">
+  <h3>🔗 Frontend Repository</h3>
+  <a href="https://github.com/mirazopablo/miel-ia-front">
+    <img src="https://img.shields.io/badge/GO_TO_FRONTEND-2b3137?style=for-the-badge&logo=github&logoColor=white" alt="Frontend Repository" />
+  </a>
+</div>
 
 ---
 
-## Key Features
+## 🎓 Academic Context
 
-###  Security and Authentication
-- **JWT (JSON Web Tokens)**: Secure and stateless authentication.
-- **RBAC (Role-Based Access Control)**: Granular permission management (Admin, Doctor, Researcher).
-- **Argon2 Hashing**: Password storage with modern cryptographic standards.
-- **Local Recovery**: Locally managed credential reset system (for high-security environments or without SMTP output).
+<div align="center">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/UM_logo.png" alt="Universidad de Mendoza Logo" width="150"/>
+  <br/>
+  <br/>
+  <p>This project is part of the <strong>Final Integrative Project</strong> chair at the <strong>Universidad de Mendoza</strong> (School of Engineering).</p>
+  <p>
+    Developed under the supervision of <strong>Bio. Ignacio Bosch</strong>
+    <br/>
+    <a href="https://github.com/NachoBosch">
+      <img src="https://img.shields.io/badge/GitHub-Supervisor-black?style=flat-square&logo=github" alt="Supervisor GitHub"/>
+    </a>
+  </p>
+</div>
 
-###  Artificial Intelligence and ML
-- **Saga Orchestration**: Sequential and coordinated execution of multiple predictive models.
-- **Ensemble Voting**: Consensus decision system using:
-  - Random Forest
-  - XGBoost
-  - Logistic Regression
-- **Double Analysis Layer**:
-  1. **Binary Detection**: Presence/Absence of pathology.
-  2. **Risk Classification**: Severity evaluation (HIGH, MEDIUM, LOW).
+> [!NOTE]
+> **Academic Repository**: This code is presented as part of an academic evaluation instance. For this reason, the repository does not accept external contributions (Pull Requests) and is maintained as a static reference of the work performed.
 
-###  Technical Architecture
-- **FastAPI**: Modern and asynchronous framework for high performance.
-- **SQLAlchemy & PostgreSQL**: Robust and relational persistence.
-- **Docker Ready**: Complete containerization for consistent deployment.
-- **Clean Architecture**: Clear separation of responsibilities (Routes, Services, Repositories).
+---
 
-###  Diagnosis Flow Diagram
+## 🌟 Technical Architecture
+
+This backend is built on **Clean Architecture** principles, ensuring scalability, maintainability, and strict separation of concerns.
+
+### Core Features
+- **Saga Pattern Orchestration**: Manages the complex flow of ML analysis, ensuring data integrity across multiple processing stages.
+- **Hybrid ML Ensemble**: A sophisticated voting system combining:
+  - **Random Forest** (Scikit-Learn)
+  - **XGBoost** (XGBoost Library)
+  - **Logistic Regression** (TensorFlow/Keras)
+- **Advanced Security**: 
+  - **Argon2** hashing for credentials.
+  - **JWT** (JSON Web Tokens) for stateless sessions.
+  - **Check-Digit** logic for file integrity verification.
+
+### Diagnosis Pipeline
 
 ```mermaid
 graph TD
-    User([ User / Doctor]) -->|Uploads CSV| API[API Gateway /diagnose]
-    API -->|Validates Format| Service[Diagnose Service]
+    User([ Client / Frontend]) -->|Uploads CSV| API[API Gateway]
+    API -->|Validates Format| Svc[Diagnosis Service]
 
-    subgraph " ML Pipeline (Saga)"
-        Service -->|1. Preprocessing| Val{Data Validation}
-        Val -->|OK| Bin[ Binary Models]
-        Val -->|Error| Err([ Error 400])
-
-        subgraph "Binary Ensemble"
+    subgraph " ML Saga Orchestrator"
+        Svc -->|Preprocessing| Data{Data Valid?}
+        Data -->|No| Err([Error 400])
+        Data -->|Yes| Bin[ Binary Detection Phase]
+        
+        subgraph "Phase 1: Binary Ensemble"
             Bin --> RF1[Random Forest]
             Bin --> XGB1[XGBoost]
-            Bin --> LR1[Log. Regression]
+            Bin --> LR1[Log. Regression (Keras)]
         end
 
-        RF1 & XGB1 & LR1 --> Vote{Majority Vote >= 2?}
+        RF1 & XGB1 & LR1 --> Vote1{Consensus?}
+        Vote1 -->|Negative| ResNeg([Negative Result])
+        Vote1 -->|Positive| Class[ Risk Classification Phase]
 
-        Vote -->|No| Neg([ Negative])
-        Vote -->|Yes| Class[ Risk Classification]
-
-        subgraph "Classification Ensemble"
+        subgraph "Phase 2: Classification Ensemble"
             Class --> RF2[Random Forest]
             Class --> XGB2[XGBoost]
-            Class --> LR2[Log. Regression]
+            Class --> LR2[Log. Regression (Keras)]
         end
 
-        RF2 & XGB2 & LR2 --> Level([ Positive - Level X])
+        RF2 & XGB2 & LR2 --> Vote2{Consensus?}
+        Vote2 --> ResPos([Positive Result + Risk Level])
     end
 
-    Neg & Level --> SHAP[ SHAP Explainability]
-    SHAP --> DB[( Database)]
-    DB --> JSON[JSON Response]
+    ResNeg & ResPos --> SHAP[SHAP Explainer Process]
+    SHAP --> DB[(MySQL Database)]
+    DB --> Resp[JSON Response]
 ```
 
 ---
 
-## 🛠️Tech Stack
+## 🚀 Tech Stack
 
-| Component | Technology | Description |
-|-----------|------------|-------------|
-| **Core API** | Python 3.12, FastAPI | Asynchronous and typed engine. |
-| **Database** | mysql:8.0.40-bookworm | Primary relational storage. |
-| **ORM** | SQLAlchemy | Database abstraction. |
-| **ML Engine** | Scikit-learn, XGBoost | Model training and inference. |
-| **Data Processing** | Pandas, NumPy | Efficient numerical data manipulation. |
-| **Server** | Uvicorn | Production ASGI server. |
-
----
-
-##  Prerequisites
-
-- Docker and Docker Compose
-- Python 3.12 (tested version, higher versions may not work because of NumPy)
-- Compose for Mysql
+| Category | Technology | Details |
+| :--- | :--- | :--- |
+| **Framework** | **FastAPI** | High-performance, async Python framework. |
+| **Language** | **Python 3.12** | Optimized for modern type hinting and concurrency. |
+| **ML Engine** | **Scikit-Learn & XGBoost** | Traditional ML models implementation. |
+| **Deep Learning** | **TensorFlow / Keras** | Used for the Logistic Regression neural component. |
+| **Database** | **MySQL 8.0** | Primary relational data storage. |
+| **ORM** | **SQLAlchemy** | Database abstraction and ORM. |
+| **Migrations** | **Alembic** | Database schema version control. |
+| **Auth** | **Python-Jose & Argon2** | Security standards for token generation and hashing. |
+| **Container** | **Docker & Compose** | Full environment containerization. |
 
 ---
 
-##  Installation and Deployment
+## 📂 Project Structure
 
-### Option A: Deployment with Docker (Recommended)
+```bash
+miel-ia/
+├── app/
+│   ├── api/            # Routes and Controllers (Endpoints)
+│   ├── core/           # Configuration, Security, and Global Specs
+│   ├── infrastructure/ # DB Connection, Repositories, and Email Svc
+│   ├── ml_pipeline/    # ML Models, Predictors, and Preprocessing
+│   ├── services/       # Business Logic and Use Cases
+│   └── main.py         # Application Entrypoint
+├── alembic/            # Database Migrations
+├── trained_models/     # Serialized ML Models (.pkl, .keras)
+├── requirements.txt    # Python Dependencies
+├── docker-compose.yml  # Container Orchestration
+└── Dockerfile          # Image Definition
+```
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/mirazopablo/miel-ia
-   cd miel-ia
-   ```
+---
 
-2. **Configure environment variables**:
-   Create a `.env` file based on `.env-example`:
-   ```bash
-   cp .env-example .env
-   ```
+## ⚡ Installation and Deployment
 
-3. **Start services**:
-   ```bash
-   docker-compose up -d --build
-   ```
+### Option A: Docker (Recommended)
+
+Ideally, run the full stack (including the database) via Docker Compose.
+
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/mirazopablo/miel-ia
+    cd miel-ia
+    ```
+
+2.  **Environment Setup**:
+    ```bash
+    cp .env-example .env
+    # Edit .env with your specific configurations
+    ```
+
+3.  **Launch**:
+    ```bash
+    docker-compose up -d --build
+    ```
 
 ### Option B: Local Execution
 
-1. **Create virtual environment**:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate
-   ```
+1.  **Virtual Environment**:
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate  # Linux/Mac
+    # .venv\Scripts\activate   # Windows
+    ```
 
-2. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+2.  **Install Dependencies**:
+    The project requires Python 3.12 specifically due to NumPy/TensorFlow compatibility.
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-3. **Run migrations and server**:
-   ```bash
-   alembic upgrade head
-   uvicorn app.main:app --reload
-   ```
-
----
-
-
-## Project Status
-
-**Current Version**: `0.1`
-
-> [!IMPORTANT]
-> **Deployment in Process**: Final configurations are currently being made on the production infrastructure. The staging environment may experience momentary intermittency.
-
-Development is active, focusing on optimizing the hyperparameters of the classification models.
+3.  **Run Server**:
+    start the server with hot-reload enabled.
+    ```bash
+    uvicorn app.main:app --reload
+    ```
 
 ---
 
-## Author
+## 👨‍💻 Author
 
-Mirazo Pablo: Computer Engineering Student
+**Mirazo Pablo**
+- 🔭 Computer Engineering Student
+- 🐱 [GitHub Profile](https://github.com/mirazopablo)
+
+---
+
+<p align="center">
+  Built with ❤️ for Medical Innovation
+</p>

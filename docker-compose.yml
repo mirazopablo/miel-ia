@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   miel-ia:
     build:
       context: .
       dockerfile: Dockerfile
     # Usamos network_mode: "host" para que el contenedor pueda acceder a localhost:3306
-    # donde está corriendo tu MySQL externo (en la carpeta /home/ubuntu/mysql).
+    # donde está corriendo tu Postgres externo.
     network_mode: "host"
     environment:
       - ENVIRONMENT=production
@@ -14,7 +12,7 @@ services:
       # Al usar host mode, localhost apunta a la VM real.
       # Definimos las variables individuales que usa app.core.config
       - DB_HOST=127.0.0.1
-      - DB_PORT=3306
+      - DB_PORT=5432
       - DB_NAME=${DB_NAME:-mielia}
       - DB_USER=${DB_USER:-root}
       - DB_PASS=${DB_PASS:-rootpassword}
@@ -27,7 +25,7 @@ services:
       - ./trained_models:/app/trained_models:ro
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3

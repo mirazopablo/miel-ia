@@ -23,6 +23,6 @@ argon2-cffi==25.1.0
 passlib==1.7.4
 shap==0.44.1
 numpy>=1.26.0,<2.0.0  
-PyMySQL==1.1.2
+psycopg2-binary==2.9.10
 loguru==0.7.3
 cryptography==46.0.3

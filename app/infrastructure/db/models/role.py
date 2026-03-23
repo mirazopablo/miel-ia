@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, CHAR
+from sqlalchemy import Column, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.associationproxy import association_proxy
 from .base_model import BaseModel

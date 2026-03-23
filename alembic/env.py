@@ -18,7 +18,7 @@ db_port = os.getenv("DB_PORT", "3306")
 db_name = os.getenv("DB_NAME")
 db_user = os.getenv("DB_USER")
 db_password = os.getenv("DB_PASS")
-db_driver = os.getenv("DB_DRIVER", "mysql+pymysql")
+db_driver = os.getenv("DB_DRIVER", "postgresql+psycopg2")
 
 # Verificar que tenemos todas las variables necesarias
 if not all([db_host, db_name, db_user, db_password]):
@@ -79,8 +79,7 @@ def run_migrations_online() -> None:
     connectable = create_engine(database_url, poolclass=pool.NullPool)
     
     with connectable.connect() as connection:
-        # ✅ Deshabilitar FK checks temporalmente (INDENTACIÓN CORRECTA)
-        connection.execute(text("SET FOREIGN_KEY_CHECKS=0"))
+
         
         context.configure(
             connection=connection,
@@ -91,8 +90,7 @@ def run_migrations_online() -> None:
         with context.begin_transaction():
             context.run_migrations()
         
-        # ✅ Rehabilitar FK checks (INDENTACIÓN CORRECTA)
-        connection.execute(text("SET FOREIGN_KEY_CHECKS=1"))
+
 
 if context.is_offline_mode():
     run_migrations_offline()

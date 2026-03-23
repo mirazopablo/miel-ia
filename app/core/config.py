@@ -20,11 +20,11 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     
     DB_HOST: str
-    DB_PORT: str = "3306"
+    DB_PORT: str = "5432"
     DB_NAME: str
     DB_USER: str
     DB_PASS: str
-    DB_DRIVER: str = "mysql+pymysql"
+    DB_DRIVER: str = "postgresql+psycopg2"
     
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here")
     ALGORITHM: str = "HS256"

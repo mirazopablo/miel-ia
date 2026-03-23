@@ -1,7 +1,6 @@
-from sqlalchemy import Engine, create_engine, text
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.pool import QueuePool
-from sqlalchemy import event
 from .config import settings
 import os
 from dotenv import load_dotenv
@@ -19,8 +18,7 @@ engine_kwargs = {
     "pool_pre_ping": True,
     "pool_recycle": 3600,
     "connect_args": {
-        "connect_timeout": 5,
-        "charset": "utf8mb4"
+        "connect_timeout": 5
     }
 }
 
@@ -32,7 +30,7 @@ SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 try:
     engine = create_engine(SQLALCHEMY_DATABASE_URL, **engine_kwargs)
 except Exception as e:
-    raise ValueError(f"Error al crear el motor de base de datos MySQL: {e}")
+    raise ValueError(f"Error al crear el motor de base de datos Postgres: {e}")
 
 SessionLocal = sessionmaker(
     autocommit=False,
@@ -63,7 +61,7 @@ def check_database_connection():
             conn.execute(text("SELECT 1"))
         return True
     except Exception as e:
-        log.error(f"Error en conexión a MySQL: {e}")
+        log.error(f"Error en conexión a Postgres: {e}")
         return False
 
 def create_tables():
@@ -73,18 +71,18 @@ def create_tables():
     try:
         Base.metadata.create_all(bind=engine)
     except Exception as e:
-        raise ValueError(f"Error al crear las tablas en MySQL: {e}")
+        raise ValueError(f"Error al crear las tablas en Postgres: {e}")
 
 def get_database_info():
     """
-    Obtiene información de la base de datos MySQL
+    Obtiene información de la base de datos Postgres
     """
     try:
         with engine.connect() as conn:
             result = conn.execute("SELECT VERSION()")
             version = result.scalar()
             
-            result = conn.execute("SHOW TABLES")
+            result = conn.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"))
             tables = [row[0] for row in result]
             
             return {

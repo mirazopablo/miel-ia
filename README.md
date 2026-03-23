@@ -85,7 +85,7 @@ graph TD
     end
 
     ResNeg & ResPos --> SHAP[SHAP Explainer Process]
-    SHAP --> DB[(MySQL Database)]
+    SHAP --> DB[(PostgresSQL Database)]
     DB --> Resp[JSON Response]
 ```
 
@@ -99,7 +99,7 @@ graph TD
 | **Language** | **Python 3.12** | Optimized for modern type hinting and concurrency. |
 | **ML Engine** | **Scikit-Learn & XGBoost** | Traditional ML models implementation. |
 | **Deep Learning** | **TensorFlow / Keras** | Used for the Logistic Regression neural component. |
-| **Database** | **MySQL 8.0** | Primary relational data storage. |
+| **Database** | **PostgreSQL +14** | Primary relational data storage. |
 | **ORM** | **SQLAlchemy** | Database abstraction and ORM. |
 | **Migrations** | **Alembic** | Database schema version control. |
 | **Auth** | **Python-Jose & Argon2** | Security standards for token generation and hashing. |

@@ -74,6 +74,7 @@ async def register_user(
     user_service: UserService = Depends(get_user_service),
     user_role_service: UserRoleService = Depends(get_user_role_service),
     role_service: RoleService = Depends(get_role_service),
+    current_user: UserOut = Depends(get_current_user)
 ):
     """Registrar un nuevo usuario"""
     try:

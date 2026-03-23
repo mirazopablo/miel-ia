@@ -109,6 +109,19 @@ class MLExplainer:
             'willison_amplitude_e8': {'mean': 0.4176, 'std': 0.3260, 'normal_min': 0.0, 'normal_max': 0.9328},
         }
 
+    def _parse_feature_name(self, feature: str) -> Dict[str, str]:
+        """Extrae métrica y electrodo de nombres como willison_amplitude_e1."""
+        electrode = "unknown"
+        metric = feature
+
+        if feature and "_e" in feature:
+            parts = feature.rsplit("_e", 1)
+            if len(parts) == 2 and parts[1].isdigit():
+                metric, electrode_id = parts
+                electrode = f"e{electrode_id}"
+
+        return {"metric": metric, "electrode": electrode}
+
     def explain_binary_prediction(self, df: pd.DataFrame, predictions: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Explica las predicciones de los modelos binarios usando SHAP."""
         explanations = []
@@ -234,17 +247,28 @@ class MLExplainer:
 
                     if value < normal_min:
                         status = "below_normal"
+                        range_status = "low"
                     elif value > normal_max:
                         status = "above_normal"
+                        range_status = "high"
                     else:
                         status = "normal"
+                        range_status = "normal"
+
+                    parsed = self._parse_feature_name(feature)
 
                     feature_importance.append({
                         "feature": feature,
+                        "electrode": parsed["electrode"],
+                        "metric": parsed["metric"],
+                        "shap_value": float(z_score) * 0.1,
                         "actual_value": float(value),
-                        "impact": abs(z_score) * 0.1,  
+                        "impact": abs(float(z_score)) * 0.1,
+                        "direction": "positive" if z_score > 0 else "negative",
                         "status": status,
-                        "z_score": float(z_score)
+                        "range_status": range_status,
+                        "z_score": float(z_score),
+                        "deviation_magnitude": float(abs(z_score))
                     })
 
             feature_importance.sort(key=lambda x: abs(x['impact']), reverse=True)
@@ -281,6 +305,7 @@ class MLExplainer:
 
                 z_score = 0
                 status = "unknown"
+                range_status = "unknown"
 
                 if stats:
                     mean = stats.get('mean', 0)
@@ -292,18 +317,17 @@ class MLExplainer:
 
                     if actual_value < normal_min:
                         status = "below_normal"
+                        range_status = "low"
                     elif actual_value > normal_max:
                         status = "above_normal"
+                        range_status = "high"
                     else:
                         status = "normal"
+                        range_status = "normal"
 
-                electrode = "unknown"
-                metric = feature
-                if "_e" in feature:
-                    parts = feature.split("_e")
-                    if len(parts) == 2:
-                        metric = parts[0]
-                        electrode = f"e{parts[1]}"
+                parsed = self._parse_feature_name(feature)
+                electrode = parsed["electrode"]
+                metric = parsed["metric"]
 
                 feature_importance.append({
                     "feature": feature,
@@ -314,7 +338,9 @@ class MLExplainer:
                     "impact": abs(shap_value),
                     "direction": "positive" if shap_value > 0 else "negative",
                     "status": status,
-                    "z_score": float(z_score)
+                    "range_status": range_status,
+                    "z_score": float(z_score),
+                    "deviation_magnitude": float(abs(z_score))
                 })
 
         feature_importance.sort(key=lambda x: x['impact'], reverse=True)
@@ -333,9 +359,19 @@ class MLExplainer:
         else:
             pred_text = f"Nivel {prediction}"
 
+        status_phrase = "" if top_feature.get('status') in ['normal', 'below_normal', 'above_normal'] else "estado desconocido"
         summary = f"Predicción: {pred_text}. "
         summary += f"Factor principal: {top_feature['metric']} en {top_feature['electrode']} "
-        summary += f"(valor: {top_feature['actual_value']:.3f}, estado: {top_feature['status']})"
+        summary += f"(valor: {top_feature['actual_value']:.3f}, estado: {top_feature.get('status', 'unknown')}). "
+
+        if top_feature.get('status') == 'normal':
+            summary += "Este valor está dentro del rango esperado, indica estabilidad de la métrica."
+        elif top_feature.get('status') == 'above_normal':
+            summary += "Se encuentra por encima de lo normal y puede estar contribuyendo al riesgo observado."
+        elif top_feature.get('status') == 'below_normal':
+            summary += "Se encuentra por debajo de lo normal y puede estar mitigando parte de la predicción."
+        else:
+            summary += "No hay suficiente información para clasificar la condición de la métrica."
 
         return summary
 
@@ -452,12 +488,16 @@ class MLExplainer:
         interpretation = f"El factor más influyente es {top_feature['metric']} en {top_feature['electrode']} "
         interpretation += f"con un valor de {top_feature['actual_value']:.3f} ({top_feature['status']}). "
 
-        abnormal_count = sum(1 for f in feature_summary[:5] if f['status'] != 'normal')
+        normal_count = sum(1 for f in feature_summary[:5] if f['status'] == 'normal')
+        abnormal_count = sum(1 for f in feature_summary[:5] if f['status'] in ['below_normal', 'above_normal'])
+
         if abnormal_count > 0:
-            interpretation += f"Se detectaron {abnormal_count} características con valores anómalos "
-            interpretation += "que contribuyen significativamente a la predicción."
+            interpretation += f"Se detectaron {abnormal_count} características fuera de rango y {normal_count} dentro de rango entre las top 5. "
+            interpretation += "Estos valores anómalos son los que empujan la predicción."
+        elif normal_count > 0:
+            interpretation += "Las características principales están en rangos normales; la base del modelo es estable."
         else:
-            interpretation += "Las características principales están en rangos normales."
+            interpretation += "No hay datos suficientes para definir un patrón consistente."
 
         return interpretation
 

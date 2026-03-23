@@ -39,7 +39,7 @@ class MedicalStudyService:
         
         
         has_doctor_role = (
-            "Doctor" in doctor_role_names or 
+            "Doctor" or "DOCTOR" in doctor_role_names or 
             str(doctor_role_id) in doctor_role_ids
         )
         
@@ -57,7 +57,7 @@ class MedicalStudyService:
         patient_role_names = [role.name for role in patient.roles]
 
         has_patient_role = (
-            "Patient" in patient_role_names or 
+            "Patient" or "PATIENT" in patient_role_names or 
             str(patient_role_id) in patient_role_ids
         )
         
@@ -146,22 +146,9 @@ class MedicalStudyService:
                 detail="Error fetching medical study from database: " + str(e)
             )
 
-        
         try:
-            study_dict = {
-                "id": study.id,
-                "access_code": study.access_code,
-                "status": study.status,
-                "creation_date": study.created_at, 
-                "ml_results": decrypt_data(study.ml_results),
-                "clinical_data": study.clinical_data,
-                "csv_file_id": study.csv_file_id,
-                "patient": study.patient,
-                "doctor": study.doctor,
-                "technician": study.technician
-            }
-            
-            dto = MedicalStudyResponseDTO(**study_dict)
+            dto = MedicalStudyResponseDTO.model_validate(study)
+            dto.ml_results = decrypt_data(study.ml_results)
             return dto
             
         except Exception as e:
@@ -212,10 +199,12 @@ class MedicalStudyService:
         """
         studies = self.__medical_study_repo.get_all(db)
         
-        return [
-            MedicalStudyResponseDTO.model_validate(study) 
-            for study in studies
-        ]
+        dtos = []
+        for study in studies:
+            dto = MedicalStudyResponseDTO.model_validate(study)
+            dto.ml_results = decrypt_data(study.ml_results)
+            dtos.append(dto)
+        return dtos
 
     def delete_study(self, db: Session, study_id: UUID):
         """

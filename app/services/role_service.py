@@ -6,6 +6,8 @@ import uuid
 from ..infrastructure.repositories.role_repo import RoleRepo
 from ..infrastructure.db.models.role import Role
 from ..infrastructure.db.DTOs.role_dto import RoleBaseDTO as RoleDTO, RoleResponseDTO
+from loguru import logger as log
+
 
 class RoleService:
     def __init__(self, role_repo: RoleRepo):

@@ -1,32 +1,32 @@
 
-# Dockerfile optimizado para Producción con MySQL
+# Dockerfile para Producción Miel-IA (GHCR Image)
 FROM python:3.11-slim
 
-#ENV
+# Variables de entorno de entorno de compilación y ejecución de Python
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app
 
 WORKDIR /app
 
+# Instalar dependencias de Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copiar todo el artefacto de aplicación, modelos de ML y migraciones
 COPY app/ ./app/
 COPY trained_models/ ./trained_models/
 COPY alembic/ ./alembic/
 COPY alembic.ini ./alembic.ini
 COPY start.sh ./start.sh
-COPY .env* ./
 
+# Crear usuario no privilegiado appuser y dar permisos
 RUN adduser --disabled-password --gecos '' appuser \
-    && chown -R appuser:appuser /app
+    && chown -R appuser:appuser /app \
+    && chmod +x ./start.sh
 
 USER appuser
 
 EXPOSE 8000
-
-# Dar permisos de ejecución al script
-RUN chmod +x ./start.sh
 
 CMD ["./start.sh"]

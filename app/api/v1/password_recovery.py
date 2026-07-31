@@ -7,7 +7,7 @@ from app.infrastructure.repositories.user_repo import UserRepo
 from app.core.security import create_password_reset_token, verify_password_reset_token, get_password_hash
 from app.core.email_utils import send_reset_email
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/auth")
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr

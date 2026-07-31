@@ -33,7 +33,15 @@ class Settings(BaseSettings):
     
     # Email Settings
     EMAILS_ENABLED: bool = True
-    EMAIL_BACKEND: str = "file"  # Options: "file", "console"
+    EMAIL_BACKEND: str = "file"  # Options: "file", "console", "smtp"
+    SMTP_HOST: Optional[str] = None
+    SMTP_PORT: Optional[int] = None
+    SMTP_USER: Optional[str] = None
+    SMTP_PASS: Optional[str] = None
+    SMTP_FROM: Optional[str] = None
+    SMTP_TLS: bool = True
+    SMTP_SSL: bool = False
+    EMAIL_BANNER_URL: str = "http://localhost:8000/static/images/banner.png"
     
     ALLOWED_ORIGINS: Union[str, List[str]] = "*"
     ALLOWED_METHODS: Union[str, List[str]] = "*"

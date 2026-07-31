@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles # <-- Importar StaticFiles
 from contextlib import asynccontextmanager
 
 from .core.config import settings
@@ -44,10 +45,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP,
-    description=settings.APP_DESCRIPTION,
     version=settings.APP_VERSION,
-    debug=settings.DEBUG,
-    lifespan=lifespan,
+    description=settings.APP_DESCRIPTION,
+    lifespan=lifespan # Añadir lifespan al constructor de FastAPI
 )
 
 # Global Exception Handler to ensure tracebacks are visible
@@ -74,17 +74,26 @@ app.add_middleware(
     allow_headers=settings.cors_headers,
 )
 
-app.include_router(test_binary, tags=["Test"])
-app.include_router(test_classify, tags=["Test"])
-app.include_router(train_binary, tags=["Train"])
-app.include_router(train_classify, tags=["Train"])
-app.include_router(user_router)
-app.include_router(medical_study_router)
-app.include_router(diagnose_router)
-app.include_router(auth_router)
-app.include_router(role_router)
-app.include_router(register_router)
-app.include_router(password_recovery_router, prefix="/api/v1/auth", tags=["Auth"])
+# Configuración de CORS para permitir el acceso desde el navegador (especialmente para probar 'file://')
+# Durante el desarrollo, permitir 'file://' ayuda a ver las imágenes del correo localmente
+# En producción, asegúrate de configurar los orígenes de forma segura.
+settings.ALLOWED_ORIGINS = ["http://localhost:3000", "http://localhost:8000", "file://"]
+
+# Montar la carpeta 'static' para servir archivos estáticos (como imágenes de banners)
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+# Incluir routers
+app.include_router(test_binary, tags=["Binary ML Model Testing"])
+app.include_router(train_binary, tags=["Binary ML Model Training"])
+app.include_router(train_classify, tags=["Classification ML Model Training"])
+app.include_router(test_classify, tags=["Classification ML Model Testing"])
+app.include_router(user_router, tags=["Users"])
+app.include_router(medical_study_router, tags=["Medical Studies"])
+app.include_router(diagnose_router, tags=["Diagnose"])
+app.include_router(auth_router, tags=["Authentication"])
+app.include_router(role_router, tags=["Roles"])
+app.include_router(register_router, tags=["Register"])
+app.include_router(password_recovery_router, tags=["Password Recovery"])
 
 
 @app.get("/", tags=["Root"])

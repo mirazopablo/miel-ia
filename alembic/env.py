@@ -36,8 +36,6 @@ database_url = f"{db_driver}://{db_user}:{encoded_password}@{db_host}:{db_port}/
 # Configuración de Alembic
 config = context.config
 
-# ✅ SOLUCIÓN: Configurar la URL directamente sin usar set_main_option
-# En lugar de config.set_main_option, la pasamos directamente al engine
 
 # Interpret the config file for Python logging.
 if config.config_file_name is not None:

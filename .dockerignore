@@ -4,15 +4,13 @@
 # Permitir archivos esenciales
 !app/**
 !trained_models/**
-!test.db
 !alembic/**
 !alembic.ini
 !requirements.txt
 !Dockerfile
 !start.sh
-!.env
 
-# Ignorar archivos específicos aunque estén en carpetas permitidas
+# Ignorar archivos específicos dentro de carpetas permitidas
 **/__pycache__
 **/*.pyc
 **/*.pyo
@@ -22,3 +20,4 @@
 **/.coverage
 **/*.backup*
 app/**/*.log
+app/emails_out/*.html

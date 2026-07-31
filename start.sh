@@ -1,15 +1,14 @@
 #!/bin/bash
 
-echo "🚀 Iniciando Miel-IA..."
+echo "🚀 Iniciando Miel-IA Backend API..."
 
-# Verificar conexión a MySQL
+# Verificar conexión a PostgreSQL
 max_retries=30
 count=0
 
-echo "🔍 Verificando disponibilidad de base de datos..."
+echo "🔍 Verificando disponibilidad de base de datos PostgreSQL..."
 
 # Loop de espera hasta que la base de datos responda
-# Usamos un pequeño script de python para intentar conectar
 while [ $count -lt $max_retries ]; do
     python3 -c "
 import sys
@@ -23,10 +22,10 @@ try:
     engine = create_engine(db_uri)
     with engine.connect() as conn:
         conn.execute(text('SELECT 1'))
-    print('✅ Base de datos lista!')
+    print('✅ Base de datos PostgreSQL lista!')
     sys.exit(0)
 except Exception as e:
-    print(f'⏳ Esperando a base de datos... ({e})')
+    print(f'⏳ Esperando a la base de datos PostgreSQL... ({e})')
     sys.exit(1)
 "
     if [ $? -eq 0 ]; then
@@ -34,19 +33,15 @@ except Exception as e:
     fi
     
     count=$((count+1))
-    echo "Retrying in 2 seconds... ($count/$max_retries)"
+    echo "Reintentando en 2 segundos... ($count/$max_retries)"
     sleep 2
 done
 
 if [ $count -eq $max_retries ]; then
-    echo "❌ Error: No se pudo conectar a la base de datos después de $max_retries intentos."
+    echo "❌ Error: No se pudo conectar a la base de datos PostgreSQL después de $max_retries intentos."
     exit 1
 fi
 
-# Migraciones (si aplica)
-# echo "Running migrations..."
-# alembic upgrade head
-
-# Iniciar la aplicación
-echo "🌟 Iniciando servidor FastAPI..."
+# Iniciar la aplicación FastAPI con Uvicorn
+echo "🌟 Iniciando servidor FastAPI con Uvicorn..."
 exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1

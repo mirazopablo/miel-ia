@@ -1,31 +1,45 @@
 services:
-  miel-ia:
+  # ==========================================
+  # Backend API: Miel-IA (GHCR Image)
+  # ==========================================
+  miel-ia-backend:
     build:
       context: .
       dockerfile: Dockerfile
-    # Usamos network_mode: "host" para que el contenedor pueda acceder a localhost:3306
-    # donde está corriendo tu Postgres externo.
-    network_mode: "host"
-    environment:
-      - ENVIRONMENT=production
-      - DEBUG=false
-      # Al usar host mode, localhost apunta a la VM real.
-      # Definimos las variables individuales que usa app.core.config
-      - DB_HOST=127.0.0.1
-      - DB_PORT=5432
-      - DB_NAME=${DB_NAME:-mielia}
-      - DB_USER=${DB_USER:-root}
-      - DB_PASS=${DB_PASS:-rootpassword}
-      - SECRET_KEY=${SECRET_KEY:-dev-secret-key}
-      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
-    volumes:
-      # Montar código para desarrollo (opcional - en prod esto no suele usarse pero lo dejo si lo necesitas)
-      - ./app:/app/app:ro
-      - ./app/emails_out:/app/app/emails_out
-      - ./trained_models:/app/trained_models:ro
+    image: ghcr.io/${GHCR_OWNER}/miel-ia:${IMAGE_TAG:-latest}
+    container_name: miel_ia_backend_prod
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - .env
+    networks:
+      - mired2
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=mired2"
+
+      # Routing Rules
+      - "traefik.http.routers.mielia.rule=Host(`${API_SUBDOMAIN}`)"
+      - "traefik.http.routers.mielia.entrypoints=web"
+      - "traefik.http.services.mielia.loadbalancer.server.port=8000"
+
+      # Headers & Security Middleware Validation
+      - "traefik.http.routers.mielia.middlewares=mielia-header-check"
+      - "traefik.http.middlewares.mielia-header-check.headers.customrequestheaders.X-App-Secret=${X_APP_SECRET_TOKEN}"
+
+      # Watchtower Automation Enable
+      - "com.centurylinklabs.watchtower.enable=true"
+
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 20s
+
+networks:
+  mired2:
+    external: true
+
+

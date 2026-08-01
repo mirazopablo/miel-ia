@@ -5,7 +5,9 @@ FROM python:3.11-slim
 # Variables de entorno de entorno de compilación y ejecución de Python
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONPATH=/app
+    PYTHONPATH=/app \
+    CUDA_VISIBLE_DEVICES=-1 \
+    TF_CPP_MIN_LOG_LEVEL=2
 
 WORKDIR /app
 

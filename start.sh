@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Disable GPU and suppress TensorFlow C++ logs to prevent C-extension crashes on CPU-only hosts
+export CUDA_VISIBLE_DEVICES=-1
+export TF_CPP_MIN_LOG_LEVEL=2
+
 echo "🚀 Iniciando Miel-IA Backend API..."
 
 # Verificar conexión a PostgreSQL

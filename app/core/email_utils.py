@@ -16,7 +16,7 @@ def send_reset_email(to_email: str, token: str):
         return
 
     subject = "Recuperación de Contraseña - Miel-IA"
-    reset_link = f"http://localhost:3000/reset-password?token={token}"
+    reset_link = f"{settings.FRONTEND_URL}/reset-password?token={token}"
     
     html_content = f"""
     <!DOCTYPE html>

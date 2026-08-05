@@ -76,8 +76,8 @@ app.add_middleware(
 
 # Configuración de CORS para permitir el acceso desde el navegador (especialmente para probar 'file://')
 # Durante el desarrollo, permitir 'file://' ayuda a ver las imágenes del correo localmente
-# En producción, asegúrate de configurar los orígenes de forma segura.
-settings.ALLOWED_ORIGINS = ["http://localhost:3000", "http://localhost:8000", "file://"]
+settings.ALLOWED_ORIGINS = ["http://localhost:3000", "http://localhost:8000", "file://", settings.FRONTEND_URL]
+
 
 # Montar la carpeta 'static' para servir archivos estáticos (como imágenes de banners)
 import os

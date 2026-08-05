@@ -42,6 +42,8 @@ class Settings(BaseSettings):
     SMTP_TLS: bool = True
     SMTP_SSL: bool = False
     EMAIL_BANNER_URL: str = "http://localhost:8000/static/images/banner.png"
+    FRONTEND_URL: str = "http://localhost:3000"
+
     
     ALLOWED_ORIGINS: Union[str, List[str]] = "*"
     ALLOWED_METHODS: Union[str, List[str]] = "*"

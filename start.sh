@@ -1,8 +1,15 @@
 #!/bin/bash
 
-# Disable GPU and suppress TensorFlow C++ logs to prevent C-extension crashes on CPU-only hosts
+# Optimizaciones específicas para Intel Celeron G5925 (2 Núcleos, Sin AVX/AVX2) y RAM Ahorrativa
 export CUDA_VISIBLE_DEVICES=-1
-export TF_CPP_MIN_LOG_LEVEL=2
+export TF_CPP_MIN_LOG_LEVEL=3
+export TF_ENABLE_ONEDNN_OPTS=0
+export OMP_NUM_THREADS=2
+export MKL_NUM_THREADS=2
+export OPENBLAS_NUM_THREADS=2
+export NUMEXPR_NUM_THREADS=2
+
+
 
 echo "🚀 Iniciando Miel-IA Backend API..."
 

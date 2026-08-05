@@ -1,20 +1,21 @@
+import os
+import joblib
 from fastapi import APIRouter, Depends, UploadFile, File
 import pandas as pd
 import pickle
 import numpy as np
 import io
-from tensorflow.keras.models import load_model
-import os
-import joblib
 
 from app.infrastructure.db.DTOs.auth_schema import UserOut
 from ...api.v1.auth import get_current_user
 
-
 test_classify = APIRouter()
 
 def load_models():
+    from tensorflow.keras.models import load_model
     base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..","..","..", "trained_models", "classify"))
+
+
     
     keras_model_path = os.path.join(base_path, "logistic_regression_model.keras")
     rf_model_path = os.path.join(base_path, "random_forest_model.pkl")

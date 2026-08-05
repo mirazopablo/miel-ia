@@ -80,7 +80,10 @@ app.add_middleware(
 settings.ALLOWED_ORIGINS = ["http://localhost:3000", "http://localhost:8000", "file://"]
 
 # Montar la carpeta 'static' para servir archivos estáticos (como imágenes de banners)
+import os
+os.makedirs("app/static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 
 # Incluir routers
 app.include_router(test_binary, tags=["Binary ML Model Testing"])

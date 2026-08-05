@@ -46,6 +46,25 @@ if [ $count -eq $max_retries ]; then
     exit 1
 fi
 
+echo "🔍 Validando importación y estructura de la aplicación FastAPI..."
+python3 -c "
+import sys
+import os
+sys.path.append('/app')
+try:
+    import app.main
+    print('✅ Importación de app.main exitosa!')
+except Exception as e:
+    import traceback
+    print('❌ Error al cargar app.main:')
+    traceback.print_exc()
+    sys.exit(1)
+"
+if [ $? -ne 0 ]; then
+    echo "❌ Error crítico al cargar la aplicación FastAPI. Abortando."
+    exit 1
+fi
+
 # Iniciar la aplicación FastAPI con Uvicorn
 echo "🌟 Iniciando servidor FastAPI con Uvicorn..."
 exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1

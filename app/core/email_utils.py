@@ -27,85 +27,102 @@ def send_reset_email(to_email: str, token: str):
         <title>Recuperación de Contraseña - Miel-IA</title>
         <style>
             body {{
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
                 line-height: 1.6;
-                color: #333;
-                background-color: hsl(0 0% 100%); /* Color de fondo */
+                color: #333333;
+                background-color: #f4f6f9;
                 margin: 0;
                 padding: 0;
             }}
             .container {{
-                max-width: 600px;
-                margin: 20px auto;
+                max-width: 550px;
+                margin: 30px auto;
                 background-color: #ffffff;
-                padding: 20px;
-                border-radius: 8px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+                border: 1px solid #e1e4e8;
             }}
-            .header {{
-                background-color: hsl(221.2 83.2% 53.3%); /* Color primary */
-                padding: 20px;
-                border-top-left-radius: 8px;
-                border-top-right-radius: 8px;
-                text-align: center;
-            }}
-            .header img {{
-                max-width: 100%;
-                height: auto;
-                border-radius: 4px;
+            .header-bar {{
+                background-color: #2563eb;
+                height: 6px;
+                width: 100%;
             }}
             .content {{
-                padding: 20px;
+                padding: 35px 30px 25px;
                 text-align: left;
+            }}
+            .title {{
+                color: #1e293b;
+                font-size: 22px;
+                font-weight: 700;
+                margin-top: 0;
+                margin-bottom: 16px;
             }}
             .button-container {{
                 text-align: center;
-                margin: 20px 0;
+                margin: 28px 0;
             }}
             .button {{
                 display: inline-block;
-                background-color: hsl(221.2 83.2% 53.3%); /* Color primary */
-                color: #ffffff;
-                padding: 10px 20px;
-                border-radius: 5px;
+                background-color: #2563eb;
+                color: #ffffff !important;
+                padding: 12px 28px;
+                border-radius: 8px;
                 text-decoration: none;
-                font-weight: bold;
+                font-weight: 600;
+                font-size: 15px;
+                box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2);
+            }}
+            .expiration-note {{
+                color: #ef4444;
+                font-size: 13px;
+                font-weight: 500;
+                margin-top: 20px;
             }}
             .footer {{
                 text-align: center;
-                margin-top: 30px;
-                font-size: 0.8em;
-                color: #777;
+                padding: 20px 30px 30px;
+                background-color: #f8fafc;
+                border-top: 1px solid #f1f5f9;
             }}
-            .expiration-note {{
-                color: hsl(0 84.2% 60.2%); /* Color destructive */
-                font-weight: bold;
+            .footer-logo {{
+                width: 140px;
+                max-width: 140px;
+                height: auto;
+                display: block;
+                margin: 0 auto 12px;
+            }}
+            .footer-text {{
+                font-size: 12px;
+                color: #94a3b8;
+                margin: 0;
             }}
         </style>
     </head>
     <body>
         <div class="container">
-            <div class="header">
-                <img src="{settings.EMAIL_BANNER_URL}" alt="Miel-IA Banner">
-            </div>
+            <div class="header-bar"></div>
             <div class="content">
-                <h1>Recuperación de Contraseña</h1>
+                <h1 class="title">Recuperación de Contraseña</h1>
                 <p>Hola,</p>
                 <p>Has solicitado restablecer tu contraseña en <strong>Miel-IA</strong>.</p>
                 <p>Haz clic en el siguiente botón para continuar:</p>
                 <div class="button-container">
-                    <a href="{reset_link}" class="button">Restablecer Contraseña</a>
+                    <a href="{reset_link}" class="button" target="_blank">Restablecer Contraseña</a>
                 </div>
-                <p>Si no has solicitado esto, puedes ignorar este correo.</p>
+                <p style="color: #64748b; font-size: 13px;">Si no has solicitado este cambio, puedes ignorar este correo de forma segura.</p>
                 <p class="expiration-note">Este enlace expirará en {settings.RESET_TOKEN_EXPIRE_MINUTES} minutos.</p>
             </div>
             <div class="footer">
-                <p>&copy; {datetime.now().year} Miel-IA. Todos los derechos reservados.</p>
+                <img src="{settings.EMAIL_BANNER_URL}" alt="Miel-IA" class="footer-logo" width="140" style="width: 140px; max-width: 140px; height: auto; display: block; margin: 0 auto 12px;" />
+                <p class="footer-text">&copy; {datetime.now().year} Miel-IA. Todos los derechos reservados.</p>
             </div>
         </div>
     </body>
     </html>
     """
+
     
     if settings.EMAIL_BACKEND == "file":
         _save_email_to_file(to_email, subject, html_content)

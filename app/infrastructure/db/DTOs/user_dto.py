@@ -25,8 +25,8 @@ class UserCreateDTO(UserBaseDTO):
     @field_validator('name')
     @classmethod
     def name_alphanumeric(cls, v):
-        if not v.isalnum():
-            raise ValueError('El nombre debe ser alfanumérico')
+        if not v.replace(" ", "").isalnum():
+            raise ValueError('El nombre debe contener solo letras, números y espacios')
         return v
 
     @field_validator('password')

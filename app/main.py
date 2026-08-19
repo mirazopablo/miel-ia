@@ -53,7 +53,27 @@ app = FastAPI(
 # Global Exception Handler to ensure tracebacks are visible
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 import traceback
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    error_messages = []
+    for error in exc.errors():
+        # Get the field name, usually loc is like ('body', 'password')
+        field = ".".join(str(loc) for loc in error["loc"][1:]) if len(error["loc"]) > 1 else str(error["loc"][0])
+        msg = error["msg"]
+        error_messages.append(f"{field}: {msg}")
+    
+    friendly_message = "Error de validación: " + " | ".join(error_messages)
+    
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": exc.errors(),
+            "message": friendly_message
+        }
+    )
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -63,7 +83,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal Server Error", "debug_message": str(exc)}
+        content={"detail": "Internal Server Error", "debug_message": str(exc), "message": "Error interno del servidor"}
     )
 
 app.add_middleware(

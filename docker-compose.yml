@@ -1,12 +1,12 @@
 services:
   # ==========================================
-  # Backend API: Miel-IA (GHCR Image)
+  # Backend API: Miel-IA (FastAPI + ML)
   # ==========================================
   miel-ia-backend:
     build:
       context: .
       dockerfile: Dockerfile
-    image: ghcr.io/${GHCR_OWNER}/miel-ia:${IMAGE_TAG:-latest}
+    image: ghcr.io/${GHCR_OWNER:-mirazopablo}/miel-ia:${IMAGE_TAG:-latest}
     container_name: miel_ia_backend_prod
     restart: unless-stopped
     security_opt:
@@ -15,20 +15,32 @@ services:
       - .env
     networks:
       - mired2
+    deploy:
+      resources:
+        limits:
+          memory: 600M
+        reservations:
+          memory: 150M
+
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=mired2"
 
-      # Routing Rules
-      - "traefik.http.routers.mielia.rule=Host(`${API_SUBDOMAIN}`)"
-      - "traefik.http.routers.mielia.entrypoints=web"
-      - "traefik.http.services.mielia.loadbalancer.server.port=8000"
+      # Regla de enrutamiento por Host de Tailscale y Prefijos (Prefijo de servicio + Sub-prefijos directos)
+      - "traefik.http.routers.mielia-api.rule=Host(`${SUBDOMAIN}`) && (PathPrefix(`/miel-ia`) || PathPrefix(`/mielia`) || PathPrefix(`/api`) || PathPrefix(`/diagnose`) || PathPrefix(`/users`) || PathPrefix(`/medical-studies`) || PathPrefix(`/health`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`) || PathPrefix(`/static`))"
+      - "traefik.http.routers.mielia-api.entrypoints=web"
+      - "traefik.http.routers.mielia-api.priority=100"
 
-      # Headers & Security Middleware Validation
-      - "traefik.http.routers.mielia.middlewares=mielia-header-check"
-      - "traefik.http.middlewares.mielia-header-check.headers.customrequestheaders.X-App-Secret=${X_APP_SECRET_TOKEN}"
+      # Middleware para remover el prefijo /miel-ia o /mielia
+      - "traefik.http.middlewares.mielia-strip.stripprefix.prefixes=/miel-ia,/mielia"
 
-      # Watchtower Automation Enable
+      # Aplicar middleware de remoción de prefijo
+      - "traefik.http.routers.mielia-api.middlewares=mielia-strip"
+
+      # Mapeo al puerto interno de FastAPI (8000)
+      - "traefik.http.services.mielia-api.loadbalancer.server.port=8000"
+
+      # Actualización automática con Watchtower
       - "com.centurylinklabs.watchtower.enable=true"
 
     healthcheck:
@@ -41,5 +53,3 @@ services:
 networks:
   mired2:
     external: true
-
-

@@ -69,7 +69,6 @@ class UserService:
         hashed_password = get_password_hash(user_create.password)
         user_data = user_create.model_dump()
         user_data["password"] = hashed_password
-
         return self.__user_repo.create(db, obj_in=user_data)
 
     def update(self, db: Session, user_id: uuid.UUID, user_update: UserUpdateDTO) -> UserBaseDTO:

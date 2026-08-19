@@ -60,8 +60,7 @@ async def create_user(
             password=user_data.password
         )
         
-        user = user_service.create_user(db, user_for_creation)
-        
+        user = user_service.create_user(db, user_for_creation)        
         role_id = user_data.role_id
         
         try:

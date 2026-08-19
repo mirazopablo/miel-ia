@@ -15,16 +15,24 @@ from ..services.user_service import UserService
 from ..core.security import create_access_token, decode_access_token, get_password_hash, verify_password
 from ..core.config import settings
 from ..infrastructure.repositories.user_repo import UserRepo
+from ..infrastructure.repositories.role_repo import RoleRepo
 from ..infrastructure.db.DTOs.auth_schema import Token, UserLogin, UserOut
 from ..core.db import get_db_session
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
 class AuthService:
-    def __init__(self, user_repo: UserRepo, user_service: UserService, user_role_service: UserRoleService):
+    def __init__(
+        self, 
+        user_repo: UserRepo, 
+        user_service: UserService, 
+        user_role_service: UserRoleService,
+        role_repo: RoleRepo
+    ):
         self.__user_repo = user_repo
         self.__user_service = user_service
         self.__user_role_service = user_role_service
+        self.__role_repo = role_repo
 
     def login(self, db: Session, user_login: UserLogin) -> Token:
         user = self.__user_repo.authenticate(db, email=user_login.email, password=user_login.password)
@@ -39,10 +47,16 @@ class AuthService:
         
         user_roles: List[UserRoleResponseDTO] = self.__user_role_service.get_user_roles_by_user_id(db, user_dto.id)
         
+        role_names = []
+        for role in user_roles:
+            name = self.__role_repo.get_role_name(role.role_id)
+            if name:
+                role_names.append(name.lower())
+        
         token_data = {
             "sub": user.email,
             "user_id": str(user_dto.id), 
-            "roles": [str(role.role_id) for role in user_roles]
+            "roles": role_names
         }
 
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -80,4 +94,5 @@ def get_auth_service(
     user_role_service: UserRoleService = Depends(get_user_role_service)
 ) -> AuthService:
     user_repo = UserRepo(db)
-    return AuthService(user_repo, user_service, user_role_service)
+    role_repo = RoleRepo(db)
+    return AuthService(user_repo, user_service, user_role_service, role_repo)

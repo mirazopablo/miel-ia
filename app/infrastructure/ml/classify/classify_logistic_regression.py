@@ -3,15 +3,15 @@ from tensorflow.keras.layers import Dense, Input, Dropout
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l2
 
-def create_model(input_dim=80):
+def create_model(input_dim: int):
     """
-    Crea un modelo de regresión logística multiclase (3 clases) usando Keras.
+    Creates a multi-class logistic regression model (3 classes) using Keras.
     
     Args:
-        input_dim: Dimensión de la capa de entrada (número de características)
+        input_dim: Input layer dimension (number of features)
         
     Returns:
-        Modelo de Keras compilado para clasificación multiclase (clases 1, 2, 3)
+        Compiled Keras model for multi-class classification (classes 1, 2, 3)
     """
     model = Sequential()
     model.add(Input(shape=(input_dim,)))

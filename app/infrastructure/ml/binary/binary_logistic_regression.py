@@ -2,15 +2,15 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Input
 from tensorflow.keras.optimizers import Adam
 
-def create_model(input_dim=80):
+def create_model(input_dim: int):
     """
-    Crea un modelo de regresión logística usando Keras.
+    Creates a Logistic Regression model using Keras.
     
     Args:
-        input_dim: Dimensión de la capa de entrada (número de características)
+        input_dim: Input layer dimension (number of features)
         
     Returns:
-        Modelo de Keras compilado
+        Compiled Keras model
     """
     model = Sequential()
     model.add(Input(shape=(input_dim,)))

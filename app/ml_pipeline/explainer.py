@@ -2,6 +2,8 @@
 import pandas as pd
 import numpy as np
 import shap
+import json
+import os
 from typing import Dict, List, Any, Optional
 import warnings
 
@@ -25,89 +27,15 @@ class MLExplainer:
         
 
     def _load_reference_stats(self) -> Dict[str, Dict[str, float]]:
-        """Carga estadísticas de referencia para interpretar valores de características."""
-        return {
-            'standard_deviation_e1': {'mean': 0.2895, 'std': 0.2465, 'normal_min': 0.0215, 'normal_max': 0.9346},
-            'standard_deviation_e2': {'mean': 0.3072, 'std': 0.2446, 'normal_min': 0.0180, 'normal_max': 0.9372},
-            'standard_deviation_e3': {'mean': 0.3205, 'std': 0.2454, 'normal_min': 0.0171, 'normal_max': 0.9363},
-            'standard_deviation_e4': {'mean': 0.3082, 'std': 0.2465, 'normal_min': 0.0253, 'normal_max': 0.9373},
-            'standard_deviation_e5': {'mean': 0.2971, 'std': 0.2494, 'normal_min': 0.0258, 'normal_max': 0.9344},
-            'standard_deviation_e6': {'mean': 0.2818, 'std': 0.2582, 'normal_min': 0.0088, 'normal_max': 0.9338},
-            'standard_deviation_e7': {'mean': 0.3042, 'std': 0.2549, 'normal_min': 0.0061, 'normal_max': 0.9356},
-            'standard_deviation_e8': {'mean': 0.2942, 'std': 0.2593, 'normal_min': 0.0095, 'normal_max': 0.9354},
-            'root_mean_square_e1': {'mean': 0.3916, 'std': 0.3201, 'normal_min': 0.0229, 'normal_max': 0.9342},
-            'root_mean_square_e2': {'mean': 0.4014, 'std': 0.3135, 'normal_min': 0.0184, 'normal_max': 0.9371},
-            'root_mean_square_e3': {'mean': 0.4115, 'std': 0.3124, 'normal_min': 0.0175, 'normal_max': 0.9351},
-            'root_mean_square_e4': {'mean': 0.4025, 'std': 0.3134, 'normal_min': 0.0279, 'normal_max': 0.9330},
-            'root_mean_square_e5': {'mean': 0.3915, 'std': 0.3156, 'normal_min': 0.0301, 'normal_max': 0.9355},
-            'root_mean_square_e6': {'mean': 0.3734, 'std': 0.3304, 'normal_min': 0.0098, 'normal_max': 0.9338},
-            'root_mean_square_e7': {'mean': 0.4013, 'std': 0.3226, 'normal_min': 0.0064, 'normal_max': 0.9355},
-            'root_mean_square_e8': {'mean': 0.3851, 'std': 0.3288, 'normal_min': 0.0095, 'normal_max': 0.9353},
-            'minimum_e1': {'mean': -0.4762, 'std': 0.3220, 'normal_min': -0.9752, 'normal_max': -0.0079},
-            'minimum_e2': {'mean': -0.4146, 'std': 0.3222, 'normal_min': -0.9435, 'normal_max': -0.0079},
-            'minimum_e3': {'mean': -0.4146, 'std': 0.3222, 'normal_min': -0.9435, 'normal_max': -0.0079},
-            'minimum_e4': {'mean': -0.4146, 'std': 0.3222, 'normal_min': -0.9435, 'normal_max': -0.0079},
-            'minimum_e5': {'mean': -0.4146, 'std': 0.3222, 'normal_min': -0.9435, 'normal_max': -0.0079},
-            'minimum_e6': {'mean': -0.4146, 'std': 0.3222, 'normal_min': -0.9435, 'normal_max': -0.0079},
-            'minimum_e7': {'mean': -0.4146, 'std': 0.3222, 'normal_min': -0.9435, 'normal_max': -0.0079},
-            'minimum_e8': {'mean': -0.4146, 'std': 0.3222, 'normal_min': -0.9435, 'normal_max': -0.0079},
-            'maximum_e1': {'mean': 0.4762, 'std': 0.3220, 'normal_min': 0.0079, 'normal_max': 0.9752},
-            'maximum_e2': {'mean': 0.4146, 'std': 0.3222, 'normal_min': 0.0079, 'normal_max': 0.9435},
-            'maximum_e3': {'mean': 0.4146, 'std': 0.3222, 'normal_min': 0.0079, 'normal_max': 0.9435},
-            'maximum_e4': {'mean': 0.4146, 'std': 0.3222, 'normal_min': 0.0079, 'normal_max': 0.9435},
-            'maximum_e5': {'mean': 0.4146, 'std': 0.3222, 'normal_min': 0.0079, 'normal_max': 0.9435},
-            'maximum_e6': {'mean': 0.4146, 'std': 0.3222, 'normal_min': 0.0079, 'normal_max': 0.9435},
-            'maximum_e7': {'mean': 0.4146, 'std': 0.3222, 'normal_min': 0.0079, 'normal_max': 0.9435},
-            'maximum_e8': {'mean': 0.4146, 'std': 0.3222, 'normal_min': 0.0079, 'normal_max': 0.9435},
-            'zero_crossings_e1': {'mean': 0.5361, 'std': 0.2403, 'normal_min': 0.1111, 'normal_max': 0.9332},
-            'zero_crossings_e2': {'mean': 0.5725, 'std': 0.2370, 'normal_min': 0.1175, 'normal_max': 0.9378},
-            'zero_crossings_e3': {'mean': 0.5954, 'std': 0.2454, 'normal_min': 0.1068, 'normal_max': 0.9384},
-            'zero_crossings_e4': {'mean': 0.5441, 'std': 0.2429, 'normal_min': 0.1143, 'normal_max': 0.9349},
-            'zero_crossings_e5': {'mean': 0.5329, 'std': 0.2439, 'normal_min': 0.1183, 'normal_max': 0.9358},
-            'zero_crossings_e6': {'mean': 0.5471, 'std': 0.2425, 'normal_min': 0.1010, 'normal_max': 0.9383},
-            'zero_crossings_e7': {'mean': 0.5440, 'std': 0.2536, 'normal_min': 0.0866, 'normal_max': 0.9339},
-            'zero_crossings_e8': {'mean': 0.5246, 'std': 0.2558, 'normal_min': 0.0952, 'normal_max': 0.9340},
-            'average_amplitude_change_e1': {'mean': 0.3790, 'std': 0.3208, 'normal_min': 0.0209, 'normal_max': 0.9345},
-            'average_amplitude_change_e2': {'mean': 0.4006, 'std': 0.3100, 'normal_min': 0.0183, 'normal_max': 0.9294},
-            'average_amplitude_change_e3': {'mean': 0.4142, 'std': 0.3108, 'normal_min': 0.0170, 'normal_max': 0.9342},
-            'average_amplitude_change_e4': {'mean': 0.3966, 'std': 0.3134, 'normal_min': 0.0278, 'normal_max': 0.9353},
-            'average_amplitude_change_e5': {'mean': 0.3882, 'std': 0.3147, 'normal_min': 0.0294, 'normal_max': 0.9315},
-            'average_amplitude_change_e6': {'mean': 0.3738, 'std': 0.3257, 'normal_min': 0.0120, 'normal_max': 0.9338},
-            'average_amplitude_change_e7': {'mean': 0.4072, 'std': 0.3163, 'normal_min': 0.0070, 'normal_max': 0.9354},
-            'average_amplitude_change_e8': {'mean': 0.3863, 'std': 0.3277, 'normal_min': 0.0098, 'normal_max': 0.9353},
-            'amplitude_first_burst_e1': {'mean': 0.3668, 'std': 0.3340, 'normal_min': 0.0150, 'normal_max': 0.9326},
-            'amplitude_first_burst_e2': {'mean': 0.3764, 'std': 0.3248, 'normal_min': 0.0153, 'normal_max': 0.9316},
-            'amplitude_first_burst_e3': {'mean': 0.3836, 'std': 0.3233, 'normal_min': 0.0164, 'normal_max': 0.9327},
-            'amplitude_first_burst_e4': {'mean': 0.3854, 'std': 0.3216, 'normal_min': 0.0233, 'normal_max': 0.9369},
-            'amplitude_first_burst_e5': {'mean': 0.3701, 'std': 0.3329, 'normal_min': 0.0244, 'normal_max': 0.9343},
-            'amplitude_first_burst_e6': {'mean': 0.3578, 'std': 0.3378, 'normal_min': 0.0139, 'normal_max': 0.9318},
-            'amplitude_first_burst_e7': {'mean': 0.3679, 'std': 0.3378, 'normal_min': 0.0081, 'normal_max': 0.9326},
-            'amplitude_first_burst_e8': {'mean': 0.3658, 'std': 0.3400, 'normal_min': 0.0110, 'normal_max': 0.9340},
-            'mean_absolute_value_e1': {'mean': 0.3835, 'std': 0.3219, 'normal_min': 0.0221, 'normal_max': 0.9343},
-            'mean_absolute_value_e2': {'mean': 0.3941, 'std': 0.3153, 'normal_min': 0.0160, 'normal_max': 0.9360},
-            'mean_absolute_value_e3': {'mean': 0.4049, 'std': 0.3123, 'normal_min': 0.0145, 'normal_max': 0.9352},
-            'mean_absolute_value_e4': {'mean': 0.3996, 'std': 0.3137, 'normal_min': 0.0279, 'normal_max': 0.9331},
-            'mean_absolute_value_e5': {'mean': 0.3895, 'std': 0.3162, 'normal_min': 0.0301, 'normal_max': 0.9354},
-            'mean_absolute_value_e6': {'mean': 0.3724, 'std': 0.3304, 'normal_min': 0.0098, 'normal_max': 0.9337},
-            'mean_absolute_value_e7': {'mean': 0.3981, 'std': 0.3227, 'normal_min': 0.0064, 'normal_max': 0.9355},
-            'mean_absolute_value_e8': {'mean': 0.3830, 'std': 0.3288, 'normal_min': 0.0095, 'normal_max': 0.9353},
-            'wave_form_length_e1': {'mean': 0.3796, 'std': 0.3214, 'normal_min': 0.0209, 'normal_max': 0.9351},
-            'wave_form_length_e2': {'mean': 0.3942, 'std': 0.3123, 'normal_min': 0.0168, 'normal_max': 0.9349},
-            'wave_form_length_e3': {'mean': 0.4075, 'std': 0.3148, 'normal_min': 0.0145, 'normal_max': 0.9343},
-            'wave_form_length_e4': {'mean': 0.3963, 'std': 0.3140, 'normal_min': 0.0253, 'normal_max': 0.9330},
-            'wave_form_length_e5': {'mean': 0.3869, 'std': 0.3157, 'normal_min': 0.0295, 'normal_max': 0.9348},
-            'wave_form_length_e6': {'mean': 0.3718, 'std': 0.3271, 'normal_min': 0.0100, 'normal_max': 0.9327},
-            'wave_form_length_e7': {'mean': 0.4001, 'std': 0.3205, 'normal_min': 0.0060, 'normal_max': 0.9339},
-            'wave_form_length_e8': {'mean': 0.3818, 'std': 0.3277, 'normal_min': 0.0089, 'normal_max': 0.9320},
-            'willison_amplitude_e1': {'mean': 0.3980, 'std': 0.3240, 'normal_min': 0.0, 'normal_max': 0.9381},
-            'willison_amplitude_e2': {'mean': 0.4512, 'std': 0.2973, 'normal_min': 0.0, 'normal_max': 0.9359},
-            'willison_amplitude_e3': {'mean': 0.4836, 'std': 0.2914, 'normal_min': 0.0, 'normal_max': 0.9352},
-            'willison_amplitude_e4': {'mean': 0.3931, 'std': 0.3249, 'normal_min': 0.0, 'normal_max': 0.9296},
-            'willison_amplitude_e5': {'mean': 0.3718, 'std': 0.3382, 'normal_min': 0.0, 'normal_max': 0.9347},
-            'willison_amplitude_e6': {'mean': 0.4083, 'std': 0.3162, 'normal_min': 0.0, 'normal_max': 0.9348},
-            'willison_amplitude_e7': {'mean': 0.4678, 'std': 0.3099, 'normal_min': 0.0, 'normal_max': 0.9371},
-            'willison_amplitude_e8': {'mean': 0.4176, 'std': 0.3260, 'normal_min': 0.0, 'normal_max': 0.9328},
-        }
+        """Carga estadísticas de referencia para interpretar valores de características desde JSON."""
+        try:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            stats_path = os.path.join(current_dir, "feature_statistics.json")
+            with open(stats_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return data.get("feature_statistics", {})
+        except Exception as e:
+            raise RuntimeError(f"Error al cargar feature_statistics.json: {e}")
 
     def _parse_feature_name(self, feature: str) -> Dict[str, str]:
         """Extrae métrica y electrodo de nombres como willison_amplitude_e1."""
@@ -121,6 +49,29 @@ class MLExplainer:
                 electrode = f"e{electrode_id}"
 
         return {"metric": metric, "electrode": electrode}
+
+    def _translate_metric(self, metric: str) -> str:
+        translations = {
+            "standard_deviation": "Desviación Estándar",
+            "root_mean_square": "Raíz Cuadrática Media (RMS)",
+            "minimum": "Voltaje Mínimo",
+            "maximum": "Voltaje Máximo",
+            "zero_crossings": "Cruces por Cero",
+            "average_amplitude_change": "Cambio Promedio de Amplitud",
+            "amplitude_first_burst": "Amplitud del Primer Burst",
+            "mean_absolute_value": "Valor Medio Absoluto",
+            "wave_form_length": "Longitud de Onda",
+            "willison_amplitude": "Amplitud de Willison"
+        }
+        return translations.get(metric, metric.replace("_", " ").title())
+
+    def _translate_status(self, status: str) -> str:
+        translations = {
+            "normal": "dentro de rangos fisiológicos",
+            "above_normal": "por encima de lo normal",
+            "below_normal": "por debajo de lo normal"
+        }
+        return translations.get(status, "estado desconocido")
 
     def explain_binary_prediction(self, df_scaled: pd.DataFrame, df_unscaled: pd.DataFrame, predictions: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Explica las predicciones de los modelos binarios usando SHAP."""
@@ -210,7 +161,7 @@ class MLExplainer:
                 "model_name": model_name,
                 "prediction": prediction,
                 "task_type": task_type,
-                "top_features": feature_importance[:10], 
+                "top_features": feature_importance[:5], 
                 "explanation_summary": self._generate_explanation_summary(
                     feature_importance, prediction, task_type
                 )
@@ -261,14 +212,16 @@ class MLExplainer:
                         "feature": feature,
                         "electrode": parsed["electrode"],
                         "metric": parsed["metric"],
-                        "shap_value": float(z_score) * 0.1,
-                        "actual_value": float(value),
-                        "impact": abs(float(z_score)) * 0.1,
-                        "direction": "positive" if z_score > 0 else "negative",
+                        "metric_es": self._translate_metric(parsed["metric"]),
+                        "shap_value": round(float(z_score) * 0.1, 4),
+                        "actual_value": round(float(value), 4),
+                        "impact": round(abs(float(z_score)) * 0.1, 4),
+                        "direction": "positivo" if z_score > 0 else "negativo",
                         "status": status,
+                        "status_es": self._translate_status(status),
                         "range_status": range_status,
-                        "z_score": float(z_score),
-                        "deviation_magnitude": float(abs(z_score))
+                        "z_score": round(float(z_score), 4),
+                        "deviation_magnitude": round(float(abs(z_score)), 4)
                     })
 
             feature_importance.sort(key=lambda x: abs(x['impact']), reverse=True)
@@ -277,8 +230,10 @@ class MLExplainer:
                 "model_name": model_name,
                 "prediction": prediction,
                 "task_type": task_type,
-                "top_features": feature_importance[:10],
-                "explanation_summary": f"Análisis estadístico para {model_name}: predicción = {prediction}"
+                "top_features": feature_importance[:5],
+                "explanation_summary": self._generate_explanation_summary(
+                    feature_importance, prediction, task_type
+                )
             }
 
         except Exception as e:
@@ -333,14 +288,16 @@ class MLExplainer:
                     "feature": feature,
                     "electrode": electrode,
                     "metric": metric,
-                    "shap_value": shap_value,
-                    "actual_value": actual_value,
-                    "impact": abs(shap_value),
-                    "direction": "positive" if shap_value > 0 else "negative",
+                    "metric_es": self._translate_metric(metric),
+                    "shap_value": round(shap_value, 4),
+                    "actual_value": round(actual_value, 4),
+                    "impact": round(abs(shap_value), 4),
+                    "direction": "positivo" if shap_value > 0 else "negativo",
                     "status": status,
+                    "status_es": self._translate_status(status),
                     "range_status": range_status,
-                    "z_score": float(z_score),
-                    "deviation_magnitude": float(abs(z_score))
+                    "z_score": round(float(z_score), 4),
+                    "deviation_magnitude": round(float(abs(z_score)), 4)
                 })
 
         feature_importance.sort(key=lambda x: x['impact'], reverse=True)
@@ -348,30 +305,22 @@ class MLExplainer:
 
     def _generate_explanation_summary(self, feature_importance: List[Dict[str, Any]],
                                       prediction: int, task_type: str) -> str:
-        """Genera un resumen textual de la explicación."""
+        """Genera un resumen textual clínico para el frontend."""
         if not feature_importance:
-            return "No se pudieron identificar factores determinantes."
+            return "No se pudieron identificar biomarcadores determinantes."
 
         top_feature = feature_importance[0]
+        metric_es = top_feature.get('metric_es', self._translate_metric(top_feature['metric']))
+        status_es = top_feature.get('status_es', self._translate_status(top_feature.get('status', 'unknown')))
 
         if task_type == "binary":
-            pred_text = "EMG positivo" if prediction == 1 else "EMG negativo"
+            pred_text = "Positivo (Anómalo)" if prediction == 1 else "Negativo (Sano)"
         else:
-            pred_text = f"Nivel {prediction}"
+            pred_text = f"Severidad Nivel {prediction}"
 
-        status_phrase = "" if top_feature.get('status') in ['normal', 'below_normal', 'above_normal'] else "estado desconocido"
-        summary = f"Predicción: {pred_text}. "
-        summary += f"Factor principal: {top_feature['metric']} en {top_feature['electrode']} "
-        summary += f"(valor: {top_feature['actual_value']:.3f}, estado: {top_feature.get('status', 'unknown')}). "
-
-        if top_feature.get('status') == 'normal':
-            summary += "Este valor está dentro del rango esperado, indica estabilidad de la métrica."
-        elif top_feature.get('status') == 'above_normal':
-            summary += "Se encuentra por encima de lo normal y puede estar contribuyendo al riesgo observado."
-        elif top_feature.get('status') == 'below_normal':
-            summary += "Se encuentra por debajo de lo normal y puede estar mitigando parte de la predicción."
-        else:
-            summary += "No hay suficiente información para clasificar la condición de la métrica."
+        summary = f"Veredicto: {pred_text}. "
+        summary += f"El biomarcador '{metric_es}' (electrodo {top_feature['electrode']}) fue decisivo "
+        summary += f"al encontrarse {status_es}."
 
         return summary
 
@@ -405,11 +354,13 @@ class MLExplainer:
                 "feature": feature_name,
                 "electrode": first_feature.get("electrode", "unknown"),
                 "metric": first_feature.get("metric", "unknown"),
-                "average_impact": float(avg_impact),
-                "average_shap_value": float(avg_shap),
-                "actual_value": first_feature.get("actual_value", 0),
+                "metric_es": first_feature.get("metric_es", "desconocido"),
+                "average_impact": round(float(avg_impact), 4),
+                "average_shap_value": round(float(avg_shap), 4),
+                "actual_value": round(float(first_feature.get("actual_value", 0)), 4),
                 "status": first_feature.get("status", "unknown"),
-                "z_score": first_feature.get("z_score", 0),
+                "status_es": first_feature.get("status_es", "desconocido"),
+                "z_score": round(float(first_feature.get("z_score", 0)), 4),
                 "appearances": len(feature_list)
             })
 
@@ -440,8 +391,8 @@ class MLExplainer:
         electrode_analysis = {}
         for electrode, impacts in electrode_impacts.items():
             electrode_analysis[electrode] = {
-                "average_impact": float(np.mean(impacts)),
-                "max_impact": float(np.max(impacts)),
+                "average_impact": round(float(np.mean(impacts)), 4),
+                "max_impact": round(float(np.max(impacts)), 4),
                 "feature_count": len(impacts)
             }
 
@@ -466,8 +417,9 @@ class MLExplainer:
         metric_analysis = {}
         for metric, impacts in metric_impacts.items():
             metric_analysis[metric] = {
-                "average_impact": float(np.mean(impacts)),
-                "max_impact": float(np.max(impacts)),
+                "metric_es": self._translate_metric(metric),
+                "average_impact": round(float(np.mean(impacts)), 4),
+                "max_impact": round(float(np.max(impacts)), 4),
                 "feature_count": len(impacts)
             }
 
@@ -480,24 +432,32 @@ class MLExplainer:
         }
 
     def _generate_summary_interpretation(self, feature_summary: List[Dict[str, Any]]) -> str:
-        """Genera interpretación textual del resumen."""
+        """Genera un reporte clínico integrador en lenguaje natural."""
         if not feature_summary:
-            return "No se encontraron patrones significativos."
+            return "No se encontraron patrones electromiográficos significativos para analizar."
 
         top_feature = feature_summary[0]
-        interpretation = f"El factor más influyente es {top_feature['metric']} en {top_feature['electrode']} "
-        interpretation += f"con un valor de {top_feature['actual_value']:.3f} ({top_feature['status']}). "
+        
+        interpretation = (
+            f"El biomarcador más influyente en la decisión clínica de la IA fue '{self._translate_metric(top_feature['metric'])}' "
+            f"registrado en el electrodo {top_feature['electrode']}, el cual se presentó "
+            f"{self._translate_status(top_feature['status'])} (valor numérico exacto: {top_feature['actual_value']:.2f}). "
+        )
 
         normal_count = sum(1 for f in feature_summary[:5] if f['status'] == 'normal')
         abnormal_count = sum(1 for f in feature_summary[:5] if f['status'] in ['below_normal', 'above_normal'])
 
         if abnormal_count > 0:
-            interpretation += f"Se detectaron {abnormal_count} características fuera de rango y {normal_count} dentro de rango entre las top 5. "
-            interpretation += "Estos valores anómalos son los que empujan la predicción."
+            interpretation += (
+                f"Al auditar los 5 principales biomarcadores neurológicos, se detectaron {abnormal_count} anomalías "
+                f"fuera de los umbrales fisiológicos de referencia y {normal_count} dentro de lo esperado. "
+                "Estas divergencias son el motor estadístico subyacente que justifica el diagnóstico emitido."
+            )
         elif normal_count > 0:
-            interpretation += "Las características principales están en rangos normales; la base del modelo es estable."
-        else:
-            interpretation += "No hay datos suficientes para definir un patrón consistente."
+            interpretation += (
+                "A pesar del diagnóstico emitido, los 5 principales biomarcadores de mayor peso predictivo se encuentran "
+                "estrictamente dentro de los rangos fisiológicos estándar, lo que sugiere un patrón sutil de anomalía estructural."
+            )
 
         return interpretation
 

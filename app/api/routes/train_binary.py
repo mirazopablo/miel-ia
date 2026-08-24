@@ -16,18 +16,15 @@ def train_models(background_tasks: BackgroundTasks, current_user: UserOut = Depe
 
     os.makedirs(trained_models_dir, exist_ok=True)
 
-    command = ["python", train_script_path]
+    command = ["python", "-u", train_script_path]
 
     def run_training():
         try:
-            result = subprocess.run(command, check=True, capture_output=True)
-            print("Entrenamiento completado.")
-            print("Salida estándar:", result.stdout.decode())
-            print("Errores:", result.stderr.decode())
+            print("Iniciando entrenamiento binario en segundo plano... Revisa la consola para ver el progreso detallado.")
+            subprocess.run(command, check=True)
+            print("Entrenamiento binario completado exitosamente.")
         except subprocess.CalledProcessError as e:
-            print("Error durante el entrenamiento:", e)
-            print("Salida estándar:", e.stdout.decode() if e.stdout else "")
-            print("Errores:", e.stderr.decode() if e.stderr else "")
+            print(f"Error durante el entrenamiento binario (Código de salida: {e.returncode})")
 
     background_tasks.add_task(run_training)
 

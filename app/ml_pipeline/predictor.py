@@ -37,23 +37,23 @@ class MLPredictor:
 
         # Cargar modelos RandomForest
         try:
-            self.binary_rf = load(os.path.join(base_path, "binary", "random_forest_model.pkl"))
-            self.classify_rf = load(os.path.join(base_path, "classify", "random_forest_model.pkl"))
+            self.binary_rf = load(os.path.join(base_path, "binary", "models", "random_forest_model.pkl"))
+            self.classify_rf = load(os.path.join(base_path, "classify", "models", "random_forest_model.pkl"))
         except Exception as e:
             log.error(f"Error al cargar RandomForest: {e}")
 
         # Cargar modelos XGBoost
         try:
-            self.binary_xgb = load(os.path.join(base_path, "binary", "xgboost_model.pkl"))
-            self.classify_xgb = load(os.path.join(base_path, "classify", "xgboost_model.pkl"))
+            self.binary_xgb = load(os.path.join(base_path, "binary", "models", "xgboost_model.pkl"))
+            self.classify_xgb = load(os.path.join(base_path, "classify", "models", "xgboost_model.pkl"))
         except Exception as e:
             log.error(f"Error al cargar XGBoost: {e}")
 
         # Cargar modelos Keras / TensorFlow con importación perezosa
         try:
             from tensorflow.keras.models import load_model
-            self.binary_log = load_model(os.path.join(base_path, "binary", "logistic_regression_model.keras"))
-            self.classify_log = load_model(os.path.join(base_path, "classify", "logistic_regression_model.keras"))
+            self.binary_log = load_model(os.path.join(base_path, "binary", "models", "logistic_regression_model.keras"))
+            self.classify_log = load_model(os.path.join(base_path, "classify", "models", "logistic_regression_model.keras"))
         except Exception as e:
             log.warning(f"No se pudo cargar modelo Keras (posible incompatibilidad de CPU/AVX en host): {e}")
             self.binary_log = None

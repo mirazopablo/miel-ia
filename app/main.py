@@ -6,10 +6,8 @@ from contextlib import asynccontextmanager
 from .core.config import settings
 from .core.db import get_db_session, check_database_connection
 
-from .api.routes.test_binary import test_binary
 from .api.routes.train_binary import train_binary
 from .api.routes.train_classify import train_classify
-from .api.routes.test_classify import test_classify
 from .api.routes.user import router as user_router
 from .api.routes.medical_study import router as medical_study_router
 from .api.routes.diagnose import router as diagnose_router
@@ -106,10 +104,8 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 
 # Incluir routers
-app.include_router(test_binary, tags=["Binary ML Model Testing"])
 app.include_router(train_binary, tags=["Binary ML Model Training"])
 app.include_router(train_classify, tags=["Classification ML Model Training"])
-app.include_router(test_classify, tags=["Classification ML Model Testing"])
 app.include_router(user_router, tags=["Users"])
 app.include_router(medical_study_router, tags=["Medical Studies"])
 app.include_router(diagnose_router, tags=["Diagnose"])

@@ -26,3 +26,4 @@ numpy>=1.26.0,<2.0.0
 psycopg2-binary==2.9.10
 loguru==0.7.3
 cryptography==46.0.3
+commitizen==4.18.0

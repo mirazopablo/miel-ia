@@ -84,17 +84,31 @@ async def global_exception_handler(request: Request, exc: Exception):
         content={"detail": "Internal Server Error", "debug_message": str(exc), "message": "Error interno del servidor"}
     )
 
+# Configuración explícita de CORS antes de instanciar el middleware
+origins = [
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "file://",
+    settings.FRONTEND_URL,
+    "https://miel-ia.pablomirazo.com.ar"
+]
+
+# Fusionar con los orígenes provistos en las variables de entorno, descartando comodines
+if isinstance(settings.ALLOWED_ORIGINS, list):
+    origins.extend([o for o in settings.ALLOWED_ORIGINS if o != "*"])
+elif isinstance(settings.ALLOWED_ORIGINS, str) and settings.ALLOWED_ORIGINS != "*":
+    origins.extend([o.strip() for o in settings.ALLOWED_ORIGINS.split(",")])
+
+# Evitar duplicados
+origins = list(set(origins))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=settings.ALLOW_CREDENTIALS,
-    allow_methods=settings.cors_methods,
-    allow_headers=settings.cors_headers,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-
-# Configuración de CORS para permitir el acceso desde el navegador (especialmente para probar 'file://')
-# Durante el desarrollo, permitir 'file://' ayuda a ver las imágenes del correo localmente
-settings.ALLOWED_ORIGINS = ["http://localhost:3000", "http://localhost:8000", "file://", settings.FRONTEND_URL]
 
 
 # Montar la carpeta 'static' para servir archivos estáticos (como imágenes de banners)

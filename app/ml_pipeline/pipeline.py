@@ -23,11 +23,16 @@ def run_diagnosis_pipeline(file_stream: IO, include_explanations: bool = True) -
     except Exception as e:
         raise ValueError(f"Error processing CSV file: {e}")
 
-    binary_predictions = ml_predictor.predict_binary(df_valid)
+    # Preparar datos (escalado automático + detección de normalización)
+    df_binary_scaled, df_unscaled = ml_predictor.prepare_data(df_valid, "binary")
+
+    binary_predictions = ml_predictor.predict_binary(df_binary_scaled)
 
     classify_predictions = None
+    df_classify_scaled = None
     if should_classify(binary_predictions):
-        classify_predictions = ml_predictor.predict_classify(df_valid)
+        df_classify_scaled, _ = ml_predictor.prepare_data(df_valid, "classify")
+        classify_predictions = ml_predictor.predict_classify(df_classify_scaled)
     else:
         pass
     binary_explanations = None
@@ -38,10 +43,10 @@ def run_diagnosis_pipeline(file_stream: IO, include_explanations: bool = True) -
         try:
             print("🔍 Generando explicaciones SHAP...")
 
-            binary_explanations = ml_explainer.explain_binary_prediction(df_valid, binary_predictions)
+            binary_explanations = ml_explainer.explain_binary_prediction(df_binary_scaled, df_unscaled, binary_predictions)
 
             if classify_predictions:
-                classify_explanations = ml_explainer.explain_classification_prediction(df_valid, classify_predictions)
+                classify_explanations = ml_explainer.explain_classification_prediction(df_classify_scaled, df_unscaled, classify_predictions)
 
             summary_insights = ml_explainer.generate_summary_insights(
                 binary_explanations or [],

@@ -122,7 +122,7 @@ class MLExplainer:
 
         return {"metric": metric, "electrode": electrode}
 
-    def explain_binary_prediction(self, df: pd.DataFrame, predictions: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def explain_binary_prediction(self, df_scaled: pd.DataFrame, df_unscaled: pd.DataFrame, predictions: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Explica las predicciones de los modelos binarios usando SHAP."""
         explanations = []
 
@@ -133,19 +133,19 @@ class MLExplainer:
 
         try:
             rf_explanation = self._explain_model(
-                self.predictor.binary_rf, df, "Random Forest",
+                self.predictor.binary_rf, df_scaled, df_unscaled, "Random Forest",
                 pred_dict.get("Random_Forest", 0), "binary"
             )
             explanations.append(rf_explanation)
 
             xgb_explanation = self._explain_model(
-                self.predictor.binary_xgb, df, "XGBoost",
+                self.predictor.binary_xgb, df_scaled, df_unscaled, "XGBoost",
                 pred_dict.get("XGBoost", 0), "binary"
             )
             explanations.append(xgb_explanation)
 
             keras_explanation = self._explain_keras_model(
-                df, "TensorFlow Logistic Regression",
+                df_scaled, df_unscaled, "TensorFlow Logistic Regression",
                 pred_dict.get("TensorFlow_Logistic_Regression", 0), "binary"
             )
             explanations.append(keras_explanation)
@@ -155,7 +155,7 @@ class MLExplainer:
 
         return explanations
 
-    def explain_classification_prediction(self, df: pd.DataFrame, predictions: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def explain_classification_prediction(self, df_scaled: pd.DataFrame, df_unscaled: pd.DataFrame, predictions: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Explica las predicciones de los modelos de clasificación usando SHAP."""
         explanations = []
 
@@ -166,19 +166,19 @@ class MLExplainer:
 
         try:
             rf_explanation = self._explain_model(
-                self.predictor.classify_rf, df, "Random Forest",
+                self.predictor.classify_rf, df_scaled, df_unscaled, "Random Forest",
                 pred_dict.get("Random_Forest", 0), "classification"
             )
             explanations.append(rf_explanation)
 
             xgb_explanation = self._explain_model(
-                self.predictor.classify_xgb, df, "XGBoost",
+                self.predictor.classify_xgb, df_scaled, df_unscaled, "XGBoost",
                 pred_dict.get("XGBoost", 0), "classification"
             )
             explanations.append(xgb_explanation)
 
             keras_explanation = self._explain_keras_model(
-                df, "TensorFlow Logistic Regression",
+                df_scaled, df_unscaled, "TensorFlow Logistic Regression",
                 pred_dict.get("TensorFlow_Logistic_Regression", 0), "classification"
             )
             explanations.append(keras_explanation)
@@ -188,12 +188,12 @@ class MLExplainer:
 
         return explanations
 
-    def _explain_model(self, model, df: pd.DataFrame, model_name: str,
+    def _explain_model(self, model, df_scaled: pd.DataFrame, df_unscaled: pd.DataFrame, model_name: str,
                        prediction: int, task_type: str) -> Dict[str, Any]:
         """Explica un modelo individual usando SHAP."""
         try:
             explainer = shap.TreeExplainer(model)
-            shap_values = explainer.shap_values(df)
+            shap_values = explainer.shap_values(df_scaled)
 
             if isinstance(shap_values, list):
                 if len(shap_values) > prediction:
@@ -204,7 +204,7 @@ class MLExplainer:
             if shap_values.ndim > 1:
                 shap_values = shap_values[0]
 
-            feature_importance = self._get_feature_importance(df, shap_values)
+            feature_importance = self._get_feature_importance(df_unscaled, shap_values)
 
             return {
                 "model_name": model_name,
@@ -227,14 +227,14 @@ class MLExplainer:
                 "explanation_summary": f"No se pudo generar explicación para {model_name}"
             }
 
-    def _explain_keras_model(self, df: pd.DataFrame, model_name: str,
+    def _explain_keras_model(self, df_scaled: pd.DataFrame, df_unscaled: pd.DataFrame, model_name: str,
                              prediction: int, task_type: str) -> Dict[str, Any]:
         """Explicación simplificada para modelos de Keras."""
         try:
             feature_importance = []
 
-            for feature in df.columns:
-                value = df[feature].iloc[0]
+            for feature in df_unscaled.columns:
+                value = df_unscaled[feature].iloc[0]
                 stats = self.reference_stats.get(feature, {})
 
                 if stats:

@@ -3,6 +3,7 @@ import numpy as np
 from joblib import load
 import pandas as pd
 from loguru import logger as log
+from .helpers import is_normalized
 
 class MLPredictor:
     """
@@ -14,16 +15,25 @@ class MLPredictor:
         self.binary_rf = None
         self.binary_xgb = None
         self.binary_log = None
+        self.binary_scaler = None
 
         self.classify_rf = None
         self.classify_xgb = None
         self.classify_log = None
+        self.classify_scaler = None
 
     def _ensure_models_loaded(self):
         if self._models_loaded:
             return
 
-        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "trained_models"))
+        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "trained_models", "v2.0"))
+
+        # Cargar scalers
+        try:
+            self.binary_scaler = load(os.path.join(base_path, "binary", "scaler", "scaler.pkl"))
+            self.classify_scaler = load(os.path.join(base_path, "classify", "scaler", "scaler.pkl"))
+        except Exception as e:
+            log.error(f"Error al cargar Scalers: {e}")
 
         # Cargar modelos RandomForest
         try:
@@ -83,8 +93,35 @@ class MLPredictor:
                     one_hot[i, int(pred)] = 1.0
                 return one_hot
 
+    def prepare_data(self, df: pd.DataFrame, task_type: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Prepara los datos para la predicción, manejando el escalado y detectando si ya vienen normalizados.
+        Retorna: (df_scaled, df_raw)
+        """
+        self._ensure_models_loaded()
+        scaler = self.binary_scaler if task_type == "binary" else self.classify_scaler
+        
+        if scaler is None:
+            log.warning(f"Scaler no encontrado para {task_type}, pasando datos crudos (peligro de overfit)")
+            return df, df
+
+        already_normalized = is_normalized(df)
+        
+        if already_normalized:
+            # Los datos ya están normalizados (aptos para modelo). Extraemos la versión cruda para reporte.
+            df_scaled = df
+            df_raw = pd.DataFrame(scaler.inverse_transform(df), columns=df.columns)
+            log.info("Datos recibidos ya normalizados. Aplicando inverse_transform para reporte crudo.")
+        else:
+            # Los datos vienen crudos. Los normalizamos para el modelo.
+            df_raw = df
+            df_scaled = pd.DataFrame(scaler.transform(df), columns=df.columns)
+            log.info("Datos recibidos crudos. Aplicando transform para predicción del modelo.")
+            
+        return df_scaled, df_raw
+
     def predict_binary(self, df: pd.DataFrame) -> dict:
-        """Realiza predicciones con el ensamblaje de modelos binarios."""
+        """Realiza predicciones con el ensamblaje de modelos binarios. (Espera df_scaled)"""
         self._ensure_models_loaded()
         df_single_row = df.head(1)
         
@@ -123,7 +160,7 @@ class MLPredictor:
         }
 
     def predict_classify(self, df: pd.DataFrame) -> dict:
-        """Realiza predicciones con el ensamblaje de modelos de clasificación."""
+        """Realiza predicciones con el ensamblaje de modelos de clasificación. (Espera df_scaled)"""
         self._ensure_models_loaded()
         df_single_row = df.head(1)
         

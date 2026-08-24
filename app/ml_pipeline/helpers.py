@@ -33,6 +33,20 @@ def validate_data(df: pd.DataFrame) -> pd.DataFrame:
     return df[FEATURE_COLUMNS]
 
 
+def is_normalized(df: pd.DataFrame) -> bool:
+    """
+    Detecta si el DataFrame ya ha sido normalizado (StandardScaler).
+    Lo hace verificando si hay valores negativos en métricas que naturalmente son estrictamente positivas,
+    como RMS o Desviación Estándar.
+    """
+    check_cols = ['root_mean_square_e1', 'standard_deviation_e1']
+    for col in check_cols:
+        if col in df.columns:
+            if (df[col] < 0).any():
+                return True
+    return False
+
+
 def should_classify(binary_preds: Dict[str, Any]) -> bool:
     """
     Devuelve True si 2 o más modelos binarios votaron '1' (positivo).

@@ -9,7 +9,7 @@ train_classify = APIRouter()
 
 @train_classify.post("/train-classify")
 def train_classify_models(background_tasks: BackgroundTasks, current_user: UserOut = Depends(get_current_user)):
-    train_script_path = os.path.abspath("train_classify.py")
+    train_script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "scripts", "train_classify_pipeline.py"))
 
     trained_models_dir = os.path.abspath("trained_models")
 

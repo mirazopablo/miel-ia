@@ -52,8 +52,6 @@ def should_classify(binary_preds: Dict[str, Any]) -> bool:
     Devuelve True si 2 o más modelos binarios votaron '1' (positivo).
     CORREGIDO: Maneja el formato actual con nested dictionary.
     """
-    print(f"🔍 [DEBUG] Evaluando binary_preds: {binary_preds}")
-
     if isinstance(binary_preds, dict) and 'predictions' in binary_preds:
         predictions = binary_preds['predictions']
     else:
@@ -89,7 +87,6 @@ def build_final_verdict(
         summary_insights: Resumen de insights cruzados
     """
     is_positive = should_classify(binary_preds)
-    binary_interpretation = "Posible positivo para EMG" if is_positive else "Posible Negativo para EMG"
     classification_interpretation = "No aplica (Resultado binario fue negativo)"
     final_class = 0
 
@@ -104,8 +101,17 @@ def build_final_verdict(
             final_class = max(set(votes), key=votes.count)
             classification_interpretation = f"Clasificado en Nivel {final_class}"
 
+    # Lógica de veredicto final basada en la conjunción de los dos sistemas
+    if not is_positive:
+        final_diagnosis = "Posible Negativo para EMG"
+    else:
+        if final_class == 0:
+            final_diagnosis = "Posible Negativo, pero con seguimiento"
+        else:
+            final_diagnosis = "Posible positivo para EMG"
+
     result = {
-        "final_diagnosis": binary_interpretation,
+        "final_diagnosis": final_diagnosis,
         "classification_level": final_class,
         "details": {
             "binary_model_votes": binary_preds,  

@@ -1,3 +1,13 @@
+## v4.0.0 (2026-08-24)
+
+### BREAKING CHANGE
+
+- Removed tensorflow and keras from production requirements. Backend now relies strictly on tflite-runtime. All future models must be converted to .tflite before deployment.|Issue ID: #1, #3
+
+### Feat
+
+- **ml-pipeline**: migrate inference engine from Keras to TFLite
+
 ## v3.1.1 (2026-08-24)
 
 ### Fix

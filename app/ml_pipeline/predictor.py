@@ -49,13 +49,23 @@ class MLPredictor:
         except Exception as e:
             log.error(f"Error al cargar XGBoost: {e}")
 
-        # Cargar modelos Keras / TensorFlow con importación perezosa
+        # Cargar modelos TFLite
         try:
-            from tensorflow.keras.models import load_model
-            self.binary_log = load_model(os.path.join(base_path, "binary", "models", "logistic_regression_model.keras"))
-            self.classify_log = load_model(os.path.join(base_path, "classify", "models", "logistic_regression_model.keras"))
+            try:
+                # Intenta usar tflite_runtime (servidor/producción)
+                from tflite_runtime.interpreter import Interpreter
+            except ImportError:
+                # Fallback a tensorflow local para desarrollo
+                from tensorflow.lite import Interpreter
+
+            self.binary_log = Interpreter(model_path=os.path.join(base_path, "binary", "models", "logistic_regression_model.tflite"))
+            self.binary_log.allocate_tensors()
+            
+            self.classify_log = Interpreter(model_path=os.path.join(base_path, "classify", "models", "logistic_regression_model.tflite"))
+            self.classify_log.allocate_tensors()
+            log.info("Modelos TFLite cargados exitosamente.")
         except Exception as e:
-            log.warning(f"No se pudo cargar modelo Keras (posible incompatibilidad de CPU/AVX en host): {e}")
+            log.warning(f"No se pudo cargar modelo TFLite: {e}")
             self.binary_log = None
             self.classify_log = None
 
@@ -66,7 +76,12 @@ class MLPredictor:
         if model is None:
             return np.array([0.5])
         if model_type == "keras":
-            probs = model.predict(df, verbose=0)
+            input_details = model.get_input_details()
+            output_details = model.get_output_details()
+            input_data = np.array(df, dtype=np.float32)
+            model.set_tensor(input_details[0]['index'], input_data)
+            model.invoke()
+            probs = model.get_tensor(output_details[0]['index'])
             return probs.flatten()
         else:
             if hasattr(model, 'predict_proba'):
@@ -80,7 +95,12 @@ class MLPredictor:
         if model is None:
             return np.zeros((len(df), 3))
         if model_type == "keras":
-            probs = model.predict(df, verbose=0)
+            input_details = model.get_input_details()
+            output_details = model.get_output_details()
+            input_data = np.array(df, dtype=np.float32)
+            model.set_tensor(input_details[0]['index'], input_data)
+            model.invoke()
+            probs = model.get_tensor(output_details[0]['index'])
             return probs
         else:
             if hasattr(model, 'predict_proba'):

@@ -9,10 +9,9 @@ flask_sqlalchemy==3.0.5
 sqlalchemy_filters==0.13.0
 psycopg2-binary==2.9.10
 matplotlib==3.10.1
-keras==3.10.0
-tensorflow==2.20.0
+tflite-runtime==2.14.0 ; python_version <= "3.11"
+tensorflow ; python_version >= "3.12"
 seaborn==0.13.2
-scikeras==0.13.0
 tqdm==4.67.1
 python-multipart==0.0.20
 pyodbc==5.2.0

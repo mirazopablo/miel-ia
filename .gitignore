@@ -97,3 +97,4 @@ reset_password.py
 # Markdown files
 *.md
 !README.md
+!CHANGELOG.md
